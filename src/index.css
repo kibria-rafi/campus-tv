@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-campusBlue: #1a56db;
+  --color-brandRed: #dc2626;
+  --color-brandBlack: #1f2937;
+}
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 20s linear infinite;
+}
+@keyframes scroll-left {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-scroll {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll-left 20s linear infinite;
+}
