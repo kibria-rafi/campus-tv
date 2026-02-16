@@ -1,24 +1,123 @@
-import { useParams } from 'react-router-dom';
-import { dummyNews } from '../data';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Calendar, Tag, ArrowLeft, Clock, PlayCircle } from 'lucide-react';
 
 export default function NewsDetails({ lang }) {
   const { id } = useParams();
-  // আইডি অনুযায়ী ডাটা খুঁজে বের করা
-  const news = dummyNews.find(item => item.id === parseInt(id));
+  const navigate = useNavigate();
+  const [news, setNews] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!news) return <h2 className="text-center py-10">{lang === 'bn' ? 'দুঃখিত, খবরটি পাওয়া যায়নি!' : 'Sorry, news not found!'}</h2>;
+  useEffect(() => {
+    const fetchSingleNews = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/news`);
+        const allNews = await res.json();
+        const selectedNews = allNews.find(item => item._id === id);
+        
+        if (selectedNews) {
+          setNews(selectedNews);
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching details:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchSingleNews();
+  }, [id]);
+
+  if (loading) return <div className="flex justify-center items-center h-screen font-bold text-brandRed animate-pulse">লোড হচ্ছে...</div>;
+
+  if (!news) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-gray-600 mb-4 text-brandBlack uppercase italic">
+          {lang === 'bn' ? 'দুঃখিত, খবরটি পাওয়া যায়নি!' : 'Sorry, news not found!'}
+        </h2>
+        <button 
+          onClick={() => navigate('/')}
+          className="bg-brandRed text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-black transition-all"
+        >
+          {lang === 'bn' ? 'হোমপেজে ফিরে যান' : 'Back to Home'}
+        </button>
+      </div>
+    );
+  }
+
+  const formattedDate = new Date(news.createdAt).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  const formattedTime = new Date(news.createdAt).toLocaleTimeString(lang === 'bn' ? 'bn-BD' : 'en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: true
+  });
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-sm">
-      <span className="text-blue-700 font-bold uppercase text-sm">{news.category[lang]}</span>
-      <h1 className="text-3xl md:text-4xl font-extrabold mt-2 mb-4 leading-tight">{news.title[lang]}</h1>
-      <p className="text-gray-500 mb-6 italic">{lang === 'bn' ? 'প্রকাশিত:' : 'Published:'} {news.time[lang]} {lang === 'bn' ? 'আগে' : 'ago'}</p>
+    <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden mt-6 mb-10 border border-gray-100">
+      {/* Back Button */}
+      <div className="bg-gray-50 p-2 border-b">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-2 text-gray-600 hover:text-brandRed font-bold transition px-2 py-1"
+        >
+          <ArrowLeft size={18} /> {lang === 'bn' ? 'ফিরে যান' : 'Back'}
+        </button>
+      </div>
+
+      {/* Media Section: Video or Image */}
+      <div className="relative group">
+        {news.videoUrl ? (
+          <div className="aspect-video w-full bg-black">
+            <iframe 
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${news.videoUrl}?autoplay=0`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        ) : (
+          <img src={news.image} alt={news.title[lang]} className="w-full h-[300px] md:h-[500px] object-cover" />
+        )}
+        
+        <div className="absolute top-4 left-4">
+            <span className="flex items-center gap-1 bg-brandRed text-white px-4 py-1 rounded-full text-xs font-bold uppercase shadow-lg">
+                <Tag size={12} /> {news.category[lang]}
+            </span>
+        </div>
+      </div>
       
-      <img src={news.image} className="w-full h-auto rounded-xl mb-6 shadow-lg" alt={news.title[lang]} />
-      
-      <div className="text-gray-800 text-lg leading-relaxed space-y-4">
-        <p>{lang === 'bn' ? 'এখানে খবরের বিস্তারিত অংশ থাকবে। যেহেতু আমরা ডামি ডাটা ব্যবহার করছি, তাই এই অংশটি আপাতত ডেমো টেক্সট হিসেবে থাকছে।' : 'Detailed news content will be here. Since we are using dummy data, this portion is demo text for now.'}</p>
-        <p>{lang === 'bn' ? `ক্যাম্পাস টিভির পক্ষ থেকে জানানো হয়েছে যে, ${news.title[lang]} বিষয়টি নিয়ে সাধারণ শিক্ষার্থীদের মধ্যে ব্যাপক আগ্রহ তৈরি হয়েছে। বিস্তারিত তথ্য শীঘ্রই আপডেট করা হবে।` : `Campus TV has announced that ${news.title[lang]} has generated significant interest among students. Detailed information will be updated soon.`}</p>
+      <div className="p-6 md:p-10">
+        {/* Date and Time */}
+        <div className="flex flex-wrap gap-6 mb-8 text-sm text-gray-500 font-semibold border-b pb-4">
+          <div className="flex items-center gap-2">
+            <Calendar size={16} className="text-brandRed" />
+            <span>{formattedDate}</span>
+          </div>
+          <div className="flex items-center gap-2 border-l pl-6 border-gray-300">
+            <Clock size={16} className="text-brandRed" />
+            <span>{formattedTime}</span>
+          </div>
+          {news.videoUrl && (
+            <div className="flex items-center gap-2 border-l pl-6 border-gray-300 text-blue-600">
+              <PlayCircle size={16} />
+              <span className="uppercase text-[10px] font-black tracking-widest">
+                {news.isLive ? 'Live Stream' : 'Video Content'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <h1 className="text-2xl md:text-4xl font-black text-brandBlack mb-8 leading-tight italic">
+          {news.title[lang]}
+        </h1>
+
+        <div className="text-lg text-gray-700 leading-loose whitespace-pre-line first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2">
+          {news.description[lang]}
+        </div>
       </div>
     </div>
   );

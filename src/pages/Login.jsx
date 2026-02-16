@@ -1,29 +1,65 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login({ lang }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
   const isBn = lang === 'bn';
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        localStorage.setItem('adminToken', data.token); // টোকেন সেভ করা
+        navigate('/admin'); // সরাসরি অ্যাডমিন ড্যাশবোর্ডে নিয়ে যাবে
+      } else {
+        alert(isBn ? "ইউজারনেম বা পাসওয়ার্ড ভুল!" : "Invalid username or password!");
+      }
+    } catch (err) {
+      alert("সার্ভার কানেকশন এরর! ব্যাকএন্ড কি চালু আছে?");
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto my-10 bg-white p-8 rounded-lg shadow-xl border-t-4 border-brandRed">
-      <h2 className="text-3xl font-black text-center text-brandBlack mb-6 uppercase">
+      <h2 className="text-3xl font-black text-center text-brandBlack mb-6 uppercase italic">
         {isBn ? 'লগইন করুন' : 'Login'}
       </h2>
-      <form className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold mb-1">{isBn ? 'ইমেইল' : 'Email'}</label>
-          <input type="email" className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-brandRed" placeholder="example@mail.com" />
+          <label className="block text-sm font-bold mb-1">{isBn ? 'ইউজারনেম' : 'Username'}</label>
+          <input 
+            type="text" // 'email' থেকে বদলে 'text' করা হয়েছে
+            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-brandRed" 
+            placeholder="admin"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label className="block text-sm font-bold mb-1">{isBn ? 'পাসওয়ার্ড' : 'Password'}</label>
-          <input type="password" className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-brandRed" placeholder="*******" />
+          <input 
+            type="password" 
+            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-brandRed" 
+            placeholder="*******"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
-        <button className="w-full bg-brandRed text-white font-bold py-2 rounded hover:bg-red-700 transition uppercase">
+        <button type="submit" className="w-full bg-brandRed text-white font-bold py-2 rounded hover:bg-red-700 transition uppercase italic">
           {isBn ? 'প্রবেশ করুন' : 'Login'}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm">
-        {isBn ? 'অ্যাকাউন্ট নেই?' : "Don't have an account?"} 
-        <Link to="/signup" className="text-brandRed font-bold ml-1 hover:underline">{isBn ? 'নতুন তৈরি করুন' : 'Sign Up'}</Link>
-      </p>
     </div>
   );
 }

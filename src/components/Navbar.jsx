@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom'; // লিঙ্ক ইমপোর্ট করা হয়েছে
+import { Link } from 'react-router-dom';
 import { translations } from '../data';
-import { Menu, X, PlayCircle, Globe, UserCircle } from 'lucide-react'; // UserCircle যোগ করা হয়েছে
+import { Menu, X, PlayCircle, Globe, UserCircle, Radio } from 'lucide-react'; 
 
 export default function Navbar({ lang, setLang }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,11 +30,12 @@ export default function Navbar({ lang, setLang }) {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-6">
-            {/* ২. ভিডিও বাটন */}
-            <button className="hidden sm:flex items-center space-x-2 bg-black text-white px-3 py-2 rounded-md font-bold hover:bg-gray-800 transition shadow-lg">
+            
+            {/* ২. ভিডিও গ্যালারি বাটন (Link যোগ করা হয়েছে) */}
+            <Link to="/video-gallery" className="hidden sm:flex items-center space-x-2 bg-black text-white px-3 py-2 rounded-md font-bold hover:bg-gray-800 transition shadow-lg">
               <PlayCircle size={20} className="text-brandRed" />
               <span className="text-sm md:text-base">ভিডিও</span>
-            </button>
+            </Link>
 
             {/* ভাষা পরিবর্তন */}
             <div className="flex items-center space-x-1 border border-gray-300 rounded px-2 py-1 bg-gray-50">
@@ -49,15 +50,16 @@ export default function Navbar({ lang, setLang }) {
               </select>
             </div>
 
-            {/* ৩. প্রোফাইল/লগইন আইকন (নতুন যুক্ত করা হয়েছে) */}
+            {/* ৩. প্রোফাইল/লগইন আইকন */}
             <Link to="/login" className="text-gray-700 hover:text-brandRed transition">
               <UserCircle size={32} strokeWidth={1.5} />
             </Link>
 
-            {/* লাইভ বাটন */}
-            <button className="hidden md:block bg-brandRed text-white px-5 py-2 rounded font-black animate-pulse shadow-md text-sm uppercase">
+            {/* ৪. লাইভ বাটন (Link যোগ করা হয়েছে) */}
+            <Link to="/live" className="hidden md:flex items-center gap-2 bg-brandRed text-white px-5 py-2 rounded font-black animate-pulse shadow-md text-sm uppercase">
+              <Radio size={16} />
               {t.live}
-            </button>
+            </Link>
 
             {/* মোবাইল মেনু বাটন */}
             <button 
@@ -79,18 +81,22 @@ export default function Navbar({ lang, setLang }) {
               <a href="#" className="py-2 border-b border-gray-50 hover:text-brandRed">{t.career}</a>
               
               <div className="flex flex-col space-y-3 pt-2">
-                {/* মোবাইল মেনুতে লগইন অপশন */}
                 <Link to="/login" onClick={() => setIsOpen(false)} className="flex items-center justify-center space-x-2 bg-gray-100 py-3 rounded-md">
                    <UserCircle size={20} />
                    <span>লগইন / সাইন আপ</span>
                 </Link>
-                <button className="flex items-center justify-center space-x-2 bg-black text-white py-3 rounded-md">
+                
+                {/* মোবাইল ভিডিও বাটন */}
+                <Link to="/video-gallery" onClick={() => setIsOpen(false)} className="flex items-center justify-center space-x-2 bg-black text-white py-3 rounded-md">
                    <PlayCircle size={20} />
                    <span>ভিডিও গ্যালারি</span>
-                </button>
-                <button className="bg-brandRed text-white py-3 rounded-md font-black">
+                </Link>
+
+                {/* মোবাইল লাইভ বাটন */}
+                <Link to="/live" onClick={() => setIsOpen(false)} className="flex items-center justify-center gap-2 bg-brandRed text-white py-3 rounded-md font-black animate-pulse">
+                   <Radio size={20} />
                    {t.live}
-                </button>
+                </Link>
               </div>
             </div>
           </div>

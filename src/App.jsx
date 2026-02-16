@@ -1,25 +1,52 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import NewsDetails from './pages/NewsDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import AdminDashboard from './pages/AdminDashboard';
+import VideoGallery from './pages/VideoGallery'; // নতুন যোগ করা হয়েছে
+import Live from './pages/Live';                 // নতুন যোগ করা হয়েছে
+
+// প্রোটেক্টেড রাউট ফাংশন
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('adminToken');
+  return token ? children : <Navigate to="/login" />;
+};
 
 function App() {
   const [lang, setLang] = useState('bn');
 
   return (
     <Router>
-      <div className="bg-gray-50 min-h-screen font-sans">
+      <div className="bg-gray-50 min-h-screen font-sans flex flex-col">
         <Navbar lang={lang} setLang={setLang} />
-        <main className="container mx-auto px-4 py-6">
+        <main className="container mx-auto px-4 py-6 flex-grow">
           <Routes>
+            {/* সাধারণ রাউটসমূহ */}
             <Route path="/" element={<Home lang={lang} />} />
             <Route path="/news/:id" element={<NewsDetails lang={lang} />} />
             <Route path="/login" element={<Login lang={lang} />} />
             <Route path="/signup" element={<Signup lang={lang} />} />
+            
+            {/* ভিডিও এবং লাইভ রাউটসমূহ - নতুন যুক্ত */}
+            <Route path="/video-gallery" element={<VideoGallery lang={lang} />} />
+            <Route path="/live" element={<Live lang={lang} />} />
+            
+            {/* অ্যাডমিন ড্যাশবোর্ড রাউট - প্রোটেক্টেড */}
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard lang={lang} />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* ভুল URL দিলে হোমপেজে রিডাইরেক্ট করবে */}
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
         <Footer lang={lang} />
