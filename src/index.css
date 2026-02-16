@@ -1,26 +1,53 @@
+/* index.css ফাইলের একদম উপরে এটি পেস্ট করুন */
+@import url('https://fonts.maateen.me/shurjo/font.css');
 @import "tailwindcss";
 
-@theme {
-  --color-campusBlue: #1a56db;
-  --color-brandRed: #dc2626;
-  --color-brandBlack: #1f2937;
-}
-@keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+/* Custom colors for Tailwind v4 */
+@layer utilities {
+  .bg-brandRed {
+    background-color: #ed1c24;
+  }
+  .text-brandRed {
+    color: #ed1c24;
+  }
+  .border-brandRed {
+    border-color: #ed1c24;
+  }
+  .bg-brandBlack {
+    background-color: #1a1a1a;
+  }
+  .text-brandBlack {
+    color: #1a1a1a;
+  }
+  .hover\:text-brandRed:hover {
+    color: #ed1c24;
+  }
+  .hover\:underline:hover {
+    text-decoration-line: underline;
+  }
+  .decoration-brandRed {
+    text-decoration-color: #ed1c24;
+  }
 }
 
-.animate-marquee {
-  display: inline-block;
-  animation: marquee 20s linear infinite;
+/* পুরো প্রোজেক্টের জন্য Shurjo ফন্ট সেট করা */
+body {
+  font-family: 'Shurjo', sans-serif;
 }
+
+/* নিউজ টিকারের এনিমেশনটি আগের মতোই থাকবে */
 @keyframes scroll-left {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .animate-scroll {
-  display: inline-block;
+  display: flex;
   white-space: nowrap;
-  animation: scroll-left 20s linear infinite;
+  animation: scroll-left 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
 }

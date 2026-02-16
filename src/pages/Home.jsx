@@ -10,8 +10,8 @@ export default function Home({ lang }) {
       <div className="lg:col-span-8">
         <Link to={`/news/${dummyNews[0].id}`}>
           <div className="relative group overflow-hidden rounded-sm shadow-xl">
-            <img src={dummyNews[0].image} className="w-full h-[500px] object-cover group-hover:scale-105 transition duration-700" />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-8 text-white">
+            <img src={dummyNews[0].image} className="w-full h-125 object-cover group-hover:scale-105 transition duration-700" />
+            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black via-black/70 to-transparent p-8 text-white">
               <span className="bg-brandRed px-3 py-1 text-sm font-bold uppercase mb-3 inline-block tracking-wider">
                 {dummyNews[0].category[lang]}
               </span>
@@ -31,7 +31,7 @@ export default function Home({ lang }) {
         <div className="space-y-4">
           {dummyNews.map(news => (
             <Link key={news.id} to={`/news/${news.id}`} className="flex gap-4 border-b border-gray-200 pb-4 group">
-              <div className="min-w-[120px]">
+              <div className="min-w-30">
                 <img src={news.image} className="w-full h-20 object-cover rounded-sm grayscale group-hover:grayscale-0 transition duration-300" />
               </div>
               <h4 className="font-bold text-md leading-snug group-hover:text-brandRed transition">
