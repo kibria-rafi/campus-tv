@@ -2,6 +2,13 @@
 @import url('https://fonts.maateen.me/shurjo/font.css');
 @import "tailwindcss";
 
+/* Set Shurjo font globally */
+@layer base {
+  * {
+    font-family: 'Shurjo', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
 /* Custom colors for Tailwind v4 */
 @layer utilities {
   .bg-brandRed {
@@ -28,11 +35,6 @@
   .decoration-brandRed {
     text-decoration-color: #ed1c24;
   }
-}
-
-/* পুরো প্রোজেক্টের জন্য Shurjo ফন্ট সেট করা */
-body {
-  font-family: 'Shurjo', sans-serif;
 }
 
 /* নিউজ টিকারের এনিমেশনটি আগের মতোই থাকবে */

@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom'; // লিঙ্ক ইমপোর্ট করা হয়েছে
 import { translations } from '../data';
-import { Menu, X, PlayCircle, Globe } from 'lucide-react'; // আইকন ইমপোর্ট
+import { Menu, X, PlayCircle, Globe, UserCircle } from 'lucide-react'; // UserCircle যোগ করা হয়েছে
 
 export default function Navbar({ lang, setLang }) {
-  const [isOpen, setIsOpen] = useState(false); // মোবাইল মেনু স্টেট
+  const [isOpen, setIsOpen] = useState(false);
   const t = translations[lang];
 
   return (
@@ -11,24 +12,25 @@ export default function Navbar({ lang, setLang }) {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-3 md:py-4">
           
-          {/* ১. লোগো সেকশন - আপনার দেওয়া PNG ব্যবহারের জন্য */}
-          <div className="flex items-center cursor-pointer">
+          {/* ১. লোগো সেকশন */}
+          <Link to="/" className="flex items-center cursor-pointer">
             <img 
-              src="/logo.png" // আপনার লোগোটি public ফোল্ডারে logo.png নামে রাখুন
+              src="/logo.png" 
               alt="Campus TV Logo" 
               className="h-12 md:h-16 w-auto object-contain" 
             />
-          </div>
+          </Link>
 
-          {/* ডেস্কটপ মেনু (বড় ডিভাইসের জন্য) */}
+          {/* ডেস্কটপ মেনু */}
           <div className="hidden lg:flex space-x-8 font-bold text-gray-800 text-lg italic">
+            <Link to="/" className="hover:text-brandRed transition underline-offset-4 hover:underline">{t.home || "হোম"}</Link>
             <a href="#" className="hover:text-brandRed transition underline-offset-4 hover:underline">{t.politics}</a>
             <a href="#" className="hover:text-brandRed transition underline-offset-4 hover:underline">{t.admission}</a>
             <a href="#" className="hover:text-brandRed transition underline-offset-4 hover:underline">{t.career}</a>
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-6">
-            {/* ২. ভিডিও বাটন (আইকন সহ) */}
+            {/* ২. ভিডিও বাটন */}
             <button className="hidden sm:flex items-center space-x-2 bg-black text-white px-3 py-2 rounded-md font-bold hover:bg-gray-800 transition shadow-lg">
               <PlayCircle size={20} className="text-brandRed" />
               <span className="text-sm md:text-base">ভিডিও</span>
@@ -47,12 +49,17 @@ export default function Navbar({ lang, setLang }) {
               </select>
             </div>
 
+            {/* ৩. প্রোফাইল/লগইন আইকন (নতুন যুক্ত করা হয়েছে) */}
+            <Link to="/login" className="text-gray-700 hover:text-brandRed transition">
+              <UserCircle size={32} strokeWidth={1.5} />
+            </Link>
+
             {/* লাইভ বাটন */}
             <button className="hidden md:block bg-brandRed text-white px-5 py-2 rounded font-black animate-pulse shadow-md text-sm uppercase">
               {t.live}
             </button>
 
-            {/* ৩. মোবাইল মেনু বাটন (Hamburger Menu) */}
+            {/* মোবাইল মেনু বাটন */}
             <button 
               className="lg:hidden p-2 text-brandBlack hover:bg-gray-100 rounded transition"
               onClick={() => setIsOpen(!isOpen)}
@@ -62,14 +69,21 @@ export default function Navbar({ lang, setLang }) {
           </div>
         </div>
 
-        {/* মোবাইল ড্রপডাউন মেনু (ছোট ডিভাইসের জন্য) */}
+        {/* মোবাইল ড্রপডাউন মেনু */}
         {isOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-100 pb-6 shadow-xl animate-in slide-in-from-top duration-300">
+          <div className="lg:hidden bg-white border-t border-gray-100 pb-6 shadow-xl">
             <div className="flex flex-col space-y-4 mt-4 px-4 font-bold text-gray-800">
+              <Link to="/" onClick={() => setIsOpen(false)} className="py-2 border-b border-gray-50 hover:text-brandRed">হোম</Link>
               <a href="#" className="py-2 border-b border-gray-50 hover:text-brandRed">{t.politics}</a>
               <a href="#" className="py-2 border-b border-gray-50 hover:text-brandRed">{t.admission}</a>
               <a href="#" className="py-2 border-b border-gray-50 hover:text-brandRed">{t.career}</a>
+              
               <div className="flex flex-col space-y-3 pt-2">
+                {/* মোবাইল মেনুতে লগইন অপশন */}
+                <Link to="/login" onClick={() => setIsOpen(false)} className="flex items-center justify-center space-x-2 bg-gray-100 py-3 rounded-md">
+                   <UserCircle size={20} />
+                   <span>লগইন / সাইন আপ</span>
+                </Link>
                 <button className="flex items-center justify-center space-x-2 bg-black text-white py-3 rounded-md">
                    <PlayCircle size={20} />
                    <span>ভিডিও গ্যালারি</span>
