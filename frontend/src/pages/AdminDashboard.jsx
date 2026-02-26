@@ -20,7 +20,7 @@ export default function AdminDashboard() {
 
   const fetchNews = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/news');
+      const res = await fetch('http://localhost:5001/api/news');
       const data = await res.json();
       setAllNews(data);
     } catch (err) {
@@ -51,7 +51,7 @@ export default function AdminDashboard() {
       isLive: type === 'live'
     };
 
-    const url = editingId ? `http://localhost:5000/api/news/${editingId}` : 'http://localhost:5000/api/news';
+    const url = editingId ? `http://localhost:5001/api/news/${editingId}` : 'http://localhost:5001/api/news';
     
     try {
       const res = await fetch(url, {
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
                     }); 
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }} className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full border border-blue-100"><Edit3 size={14}/></button>
-                  <button onClick={async () => {if(window.confirm("আপনি কি এটি ডিলিট করতে চান?")){await fetch(`http://localhost:5000/api/news/${item._id}`, {method:'DELETE'}); fetchNews();}}} className="text-brandRed p-1.5 hover:bg-red-50 rounded-full border border-red-100"><Trash2 size={14}/></button>
+                  <button onClick={async () => {if(window.confirm("আপনি কি এটি ডিলিট করতে চান?")){await fetch(`http://localhost:5001/api/news/${item._id}`, {method:'DELETE'}); fetchNews();}}} className="text-brandRed p-1.5 hover:bg-red-50 rounded-full border border-red-100"><Trash2 size={14}/></button>
                 </div>
               </div>
             ))}

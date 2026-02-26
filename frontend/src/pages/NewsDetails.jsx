@@ -11,7 +11,7 @@ export default function NewsDetails({ lang }) {
   useEffect(() => {
     const fetchSingleNews = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/news`);
+        const res = await fetch(`http://localhost:5001/api/news`);
         const allNews = await res.json();
         const selectedNews = allNews.find(item => item._id === id);
         
