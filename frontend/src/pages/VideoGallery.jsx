@@ -9,7 +9,7 @@ export default function VideoGallery({ lang }) {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/news');
+        const res = await fetch('http://localhost:5001/api/news');
         const data = await res.json();
         // ভিডিও ইউআরএল আছে এমন পোস্টগুলো ফিল্টার করা
         const onlyVideos = data.filter(item => item.videoUrl && item.videoUrl.trim() !== "");

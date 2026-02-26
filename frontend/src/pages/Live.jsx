@@ -4,7 +4,7 @@ export default function Live() {
   const [liveVideo, setLiveVideo] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/news')
+    fetch('http://localhost:5001/api/news')
       .then(res => res.json())
       .then(data => {
         // শুধু লাইভ ভিডিওগুলো ফিল্টার করা

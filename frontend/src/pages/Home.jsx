@@ -10,7 +10,7 @@ export default function Home({ lang }) {
 
   useEffect(() => {
     // ব্যাকএন্ড থেকে খবর নিয়ে আসা
-    fetch('http://localhost:5000/api/news')
+    fetch('http://localhost:5001/api/news')
       .then(res => res.json())
       .then(data => {
         setNewsList(data);
