@@ -16,6 +16,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Live from './pages/Live'; // নতুন যোগ করা হয়েছে
 import VideoArchive from './pages/VideoArchive';
 import Contact from './pages/Contact';
+import New from './pages/New';
 // প্রোটেক্টেড রাউট ফাংশন
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
@@ -60,6 +61,10 @@ function App() {
                   <Route
                     path="/contact"
                     element={<Contact lang={lang} />}
+                  />
+                  <Route
+                    path="/news"
+                    element={<New lang={lang} />}
                   />
                   <Route
                     path="/news/:id"

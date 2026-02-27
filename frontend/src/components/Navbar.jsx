@@ -43,12 +43,12 @@ export default function Navbar({ lang, setLang }) {
             >
               {t.home || 'হোম'}
             </Link>
-            <a
-              href="#"
+            <Link
+              to="/news"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
             >
-              {t.career}
-            </a>
+              {t.news}
+            </Link>
             <Link
               to="/contact"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
@@ -135,12 +135,13 @@ export default function Navbar({ lang, setLang }) {
               >
                 হোম
               </Link>
-              <a
-                href="#"
+              <Link
+                to="/news"
+                onClick={() => setIsOpen(false)}
                 className="py-2 border-b border-border hover:text-brandRed"
               >
-                {t.career}
-              </a>
+                {t.news}
+              </Link>
               <Link
                 to="/contact"
                 onClick={() => setIsOpen(false)}

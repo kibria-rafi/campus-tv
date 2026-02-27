@@ -1,12 +1,12 @@
 export const translations = {
   bn: {
-    career: 'ক্যারিয়ার',
+    news: 'সংবাদ',
     live: 'লাইভ',
     latest: 'সর্বশেষ আপডেট',
     contact: 'যোগাযোগ',
   },
   en: {
-    career: 'Career',
+    news: 'News',
     live: 'LIVE',
     latest: 'Latest Updates',
     contact: 'Contact',
