@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('news'); // 'news' or 'employees'
   const [employee, setEmployee] = useState(emptyEmployee);
   const [allEmployees, setAllEmployees] = useState([]);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -100,16 +101,20 @@ export default function AdminDashboard() {
       imageURL: employee.imageURL || '',
     };
 
+    const url = editingEmployeeId 
+      ? `http://localhost:5001/api/employees/${editingEmployeeId}` 
+      : 'http://localhost:5001/api/employees';
+
     try {
-      const res = await fetch('http://localhost:5001/api/employees', {
-        method: 'POST',
+      const res = await fetch(url, {
+        method: editingEmployeeId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        alert("কর্মচারী সফলভাবে যোগ করা হয়েছে!");
-        setEmployee(emptyEmployee);
+        alert(editingEmployeeId ? "কর্মচারী সফলভাবে আপডেট করা হয়েছে!" : "কর্মচারী সফলভাবে যোগ করা হয়েছে!");
+        cancelEmployeeEdit();
         fetchEmployees();
       } else {
         const errData = await res.json();
@@ -118,6 +123,11 @@ export default function AdminDashboard() {
     } catch (err) {
       alert("সার্ভার কানেকশনে সমস্যা!");
     }
+  };
+
+  const cancelEmployeeEdit = () => {
+    setEditingEmployeeId(null);
+    setEmployee(emptyEmployee);
   };
 
   const handleDeleteEmployee = async (id) => {
@@ -264,9 +274,14 @@ export default function AdminDashboard() {
             <div className="bg-card shadow-xl rounded-2xl border border-border overflow-hidden">
               <div className="p-4 text-white flex items-center justify-between font-bold uppercase italic bg-brandBlack">
                 <div className="flex items-center gap-2">
-                  <Users size={20}/>
-                  <span>Add New Employee</span>
+                  {editingEmployeeId ? <Edit3 size={20}/> : <Users size={20}/>}
+                  <span>{editingEmployeeId ? 'Edit Employee' : 'Add New Employee'}</span>
                 </div>
+                {editingEmployeeId && (
+                  <button onClick={cancelEmployeeEdit}>
+                    <XCircle size={20}/>
+                  </button>
+                )}
               </div>
 
               <form onSubmit={handleEmployeeSubmit} className="p-8 space-y-6">
@@ -320,7 +335,7 @@ export default function AdminDashboard() {
                   type="submit"
                   className="w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed"
                 >
-                  Add Employee
+                  {editingEmployeeId ? 'Update Employee' : 'Add Employee'}
                 </button>
               </form>
             </div>
@@ -354,6 +369,22 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                      onClick={() => {
+                        setEditingEmployeeId(emp._id);
+                        setEmployee({
+                          name: emp.name,
+                          designation: emp.designation,
+                          bioBn: emp.bio.bn,
+                          bioEn: emp.bio.en,
+                          imageURL: emp.imageURL || '',
+                        });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full border border-blue-100"
+                    >
+                      <Edit3 size={14} />
+                    </button>
                     <button
                       onClick={() => handleDeleteEmployee(emp._id)}
                       className="text-brandRed p-1.5 hover:bg-red-50 rounded-full border border-red-100"

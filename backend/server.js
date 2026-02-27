@@ -185,6 +185,22 @@ app.post('/api/employees', async (req, res) => {
   }
 });
 
+// PUT /api/employees/:id - Admin only (Update employee)
+app.put('/api/employees/:id', async (req, res) => {
+  try {
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updatedEmployee)
+      return res.status(404).json({ message: 'Employee not found' });
+    res.json({ success: true, message: 'Employee updated successfully!', updatedEmployee });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE /api/employees/:id - Admin only (Delete employee)
 app.delete('/api/employees/:id', async (req, res) => {
   try {
