@@ -4,12 +4,14 @@ export const translations = {
     live: 'লাইভ',
     latest: 'সর্বশেষ আপডেট',
     contact: 'যোগাযোগ',
+    followUs: 'আমাদের অনুসরণ করুন',
   },
   en: {
     news: 'News',
     live: 'LIVE',
     latest: 'Latest Updates',
     contact: 'Contact',
+    followUs: 'Follow Us',
   },
 };
 
