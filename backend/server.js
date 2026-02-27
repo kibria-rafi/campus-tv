@@ -1,13 +1,46 @@
 const express = require('express');
+const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { XMLParser } = require('fast-xml-parser');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
 
-// Middleware
+// ── Socket.IO ───────────────────────────────────────────────────────
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+  },
+});
+
+/** Broadcast current viewer count to everyone in the "live" room. */
+async function updateViewerCount() {
+  const sockets = await io.in('live').allSockets();
+  io.to('live').emit('live:viewers', { count: sockets.size });
+}
+
+io.on('connection', (socket) => {
+  socket.on('live:join', () => {
+    socket.join('live');
+    updateViewerCount();
+  });
+
+  socket.on('live:leave', () => {
+    socket.leave('live');
+    updateViewerCount();
+  });
+
+  socket.on('disconnect', () => {
+    updateViewerCount();
+  });
+});
+
+// ── Middleware ───────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
@@ -99,6 +132,12 @@ app.delete('/api/news/:id', async (req, res) => {
   }
 });
 
+// ── Live Viewers REST Endpoint (debug / initial load) ───────────────────
+app.get('/api/live/viewers', async (_req, res) => {
+  const sockets = await io.in('live').allSockets();
+  res.json({ count: sockets.size });
+});
+
 // ── YouTube RSS Route ────────────────────────────────────────────────────
 // Simple in-memory cache (5-minute TTL)
 const YOUTUBE_CHANNEL_ID = 'UCTSpN9ivGWfXz9vVXMUjVcw';
@@ -157,7 +196,7 @@ const startServer = async () => {
     console.log('✅ MongoDB Connected Successfully!');
 
     const PORT = process.env.PORT || 5001;
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
