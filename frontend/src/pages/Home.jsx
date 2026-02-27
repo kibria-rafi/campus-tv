@@ -16,7 +16,10 @@ export default function Home({ lang }) {
       .then((data) => {
         // Filter out video posts (non-empty videoUrl that are not live)
         const articles = data.filter(
-          (item) => !item.videoUrl || item.videoUrl.trim() === '' || item.isLive === true
+          (item) =>
+            !item.videoUrl ||
+            item.videoUrl.trim() === '' ||
+            item.isLive === true
         );
         setNewsList(articles);
         setLoading(false);
@@ -26,8 +29,6 @@ export default function Home({ lang }) {
 
   if (loading)
     return <div className="text-center py-20 font-bold">লোড হচ্ছে...</div>;
-  if (newsList.length === 0)
-    return <div className="text-center py-20">এখনো কোনো খবর নেই।</div>;
 
   return (
     <div className="space-y-6">
@@ -45,55 +46,77 @@ export default function Home({ lang }) {
         newsList={newsList}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
-        {/* প্রধান খবর (সবার শেষের পোস্টটি আগে দেখাবে) */}
-        <div className="lg:col-span-8">
-          <Link to={`/news/${newsList[0]._id}`}>
-            <div className="relative group overflow-hidden rounded-sm shadow-xl">
+      {/* ── News Grid ── */}
+      <section className="mt-4">
+        <h3 className="text-2xl font-black border-l-8 border-brandRed pl-3 uppercase text-foreground italic mb-6">
+          {t.latest}
+        </h3>
+
+        {newsList.length === 0 ? (
+          <div className="text-center py-20 text-foreground opacity-60">
+            এখনো কোনো খবর নেই।
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:auto-rows-[260px]">
+            {/* Featured card — first item */}
+            <Link
+              to={`/news/${newsList[0]._id}`}
+              className="md:col-span-2 lg:col-span-2 group relative overflow-hidden rounded-sm shadow-xl block"
+            >
               <img
                 src={newsList[0].image}
-                className="w-full h-[500px] object-cover"
-                alt=""
+                className="w-full h-60 md:h-72 lg:h-full object-cover transition group-hover:scale-105 duration-500"
+                alt={newsList[0].title[lang]}
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black p-8 text-white">
-                <span className="bg-brandRed px-3 py-1 text-sm font-bold uppercase mb-3 inline-block">
-                  {newsList[0].category[lang]}
-                </span>
-                <h2 className="text-4xl font-bold leading-tight underline decoration-brandRed decoration-4 underline-offset-8">
+              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                {newsList[0].category && (
+                  <span className="bg-brandRed px-3 py-1 text-xs font-bold uppercase mb-3 inline-block rounded-sm">
+                    {newsList[0].category[lang]}
+                  </span>
+                )}
+                <h2 className="text-lg md:text-xl lg:text-2xl font-bold leading-tight underline decoration-brandRed decoration-4 underline-offset-8 mb-1">
                   {newsList[0].title[lang]}
                 </h2>
+                {newsList[0].body && (
+                  <p className="text-sm text-gray-300 line-clamp-2 hidden md:block">
+                    {typeof newsList[0].body === 'object'
+                      ? newsList[0].body[lang]
+                      : newsList[0].body}
+                  </p>
+                )}
               </div>
-            </div>
-          </Link>
-        </div>
+            </Link>
 
-        {/* সাইডবার লিস্ট */}
-        <div className="lg:col-span-4 space-y-6">
-          <h3 className="text-2xl font-black border-l-8 border-brandRed pl-3 uppercase text-foreground italic">
-            {t.latest}
-          </h3>
-          <div className="space-y-4">
-            {newsList.slice(1, 6).map((news) => (
+            {/* Normal cards — items 2–16 */}
+            {newsList.slice(1, 16).map((news) => (
               <Link
                 key={news._id}
                 to={`/news/${news._id}`}
-                className="flex gap-4 border-b border-border pb-4 group"
+                className="group flex flex-col overflow-hidden rounded-sm shadow-md bg-card border border-border hover:shadow-lg transition-shadow duration-200"
               >
-                <div className="min-w-[120px]">
+                <div className="overflow-hidden shrink-0">
                   <img
                     src={news.image}
-                    className="w-full h-20 object-cover rounded-sm group-hover:brightness-75"
-                    alt=""
+                    className="w-full h-40 object-cover group-hover:brightness-90 group-hover:scale-105 transition duration-300"
+                    alt={news.title[lang]}
                   />
                 </div>
-                <h4 className="font-bold text-md leading-snug group-hover:text-brandRed transition">
-                  {news.title[lang]}
-                </h4>
+                <div className="p-3 flex flex-col flex-1">
+                  {news.category && (
+                    <span className="text-xs text-brandRed font-semibold uppercase mb-1">
+                      {news.category[lang]}
+                    </span>
+                  )}
+                  <h4 className="font-bold text-sm leading-snug line-clamp-2 text-foreground group-hover:text-brandRed transition-colors duration-200">
+                    {news.title[lang]}
+                  </h4>
+                </div>
               </Link>
             ))}
           </div>
-        </div>
-      </div>
+        )}
+      </section>
     </div>
   );
 }
