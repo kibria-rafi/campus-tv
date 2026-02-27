@@ -1,15 +1,11 @@
 export const translations = {
   bn: {
-    politics: 'রাজনীতি',
-    admission: 'ভর্তি',
     career: 'ক্যারিয়ার',
     live: 'লাইভ',
     latest: 'সর্বশেষ আপডেট',
     contact: 'যোগাযোগ',
   },
   en: {
-    politics: 'Politics',
-    admission: 'Admission',
     career: 'Career',
     live: 'LIVE',
     latest: 'Latest Updates',

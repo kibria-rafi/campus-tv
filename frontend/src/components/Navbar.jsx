@@ -47,18 +47,6 @@ export default function Navbar({ lang, setLang }) {
               href="#"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
             >
-              {t.politics}
-            </a>
-            <a
-              href="#"
-              className="hover:text-brandRed transition underline-offset-4 hover:underline"
-            >
-              {t.admission}
-            </a>
-            <a
-              href="#"
-              className="hover:text-brandRed transition underline-offset-4 hover:underline"
-            >
               {t.career}
             </a>
             <Link
@@ -147,18 +135,6 @@ export default function Navbar({ lang, setLang }) {
               >
                 হোম
               </Link>
-              <a
-                href="#"
-                className="py-2 border-b border-border hover:text-brandRed"
-              >
-                {t.politics}
-              </a>
-              <a
-                href="#"
-                className="py-2 border-b border-border hover:text-brandRed"
-              >
-                {t.admission}
-              </a>
               <a
                 href="#"
                 className="py-2 border-b border-border hover:text-brandRed"
