@@ -14,10 +14,15 @@ const HLS_SRC =
  *   hlsSrc  {string}  – optional override for the HLS stream URL
  *   title   {string}  – display title (default "Live Stream")
  */
+/**
+ * variant: 'compact' (homepage, max-w-3xl) | 'full' (live page, max-w-6xl)
+ */
 export default function LivePlayer({
   hlsSrc = HLS_SRC,
   title = 'Live Stream',
+  variant = 'compact',
 }) {
+  const outerWidth = variant === 'full' ? 'max-w-6xl' : 'max-w-3xl';
   // 'live' → show VideoJsPlayer
   // 'archive' → show YouTubeArchivePlayer
   const [mode, setMode] = useState('live');
@@ -37,7 +42,9 @@ export default function LivePlayer({
   }, []);
 
   return (
-    <div className="w-full bg-neutral-900 rounded-xl shadow-2xl overflow-hidden">
+    <div
+      className={`w-full ${outerWidth} mx-auto bg-neutral-900 rounded-xl shadow-2xl overflow-hidden`}
+    >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3 px-5 py-3 bg-neutral-800">
         {/* Pulsing live/archive dot */}

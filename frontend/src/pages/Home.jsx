@@ -28,8 +28,11 @@ export default function Home({ lang }) {
   return (
     <div className="space-y-6">
       {/* ── Live / Archive Player (pinned at top) ── */}
-      <section className="w-full max-w-3xl mx-auto">
-        <LivePlayer title="Live Stream" />
+      <section className="w-full">
+        <LivePlayer
+          title="Live Stream"
+          variant="compact"
+        />
       </section>
 
       {/* টিচারে এখন আসল খবর স্ক্রল করবে */}
