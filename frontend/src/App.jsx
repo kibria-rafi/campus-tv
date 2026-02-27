@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import NewsDetails from './pages/NewsDetails';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import AboutUs from './pages/AboutUs';
 
 import Live from './pages/Live';
 import VideoArchive from './pages/VideoArchive';
@@ -60,6 +61,10 @@ function App() {
                   <Route
                     path="/contact"
                     element={<Contact lang={lang} />}
+                  />
+                  <Route
+                    path="/about"
+                    element={<AboutUs lang={lang} />}
                   />
                   <Route
                     path="/news"

@@ -5,6 +5,7 @@ export const translations = {
     live: 'লাইভ',
     latest: 'সর্বশেষ আপডেট',
     contact: 'যোগাযোগ',
+    about: 'আমাদের সম্পর্কে',
     followUs: 'আমাদের অনুসরণ করুন',
   },
   en: {
@@ -13,6 +14,7 @@ export const translations = {
     live: 'LIVE',
     latest: 'Latest Updates',
     contact: 'Contact',
+    about: 'About Us',
     followUs: 'Follow Us',
   },
 };

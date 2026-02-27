@@ -73,7 +73,19 @@ const newsSchema = new mongoose.Schema({
 
 // মডেল ডিক্লেয়ার করার আগে চেক করে নেওয়া হচ্ছে যেন ডুপ্লিকেট না হয়
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
+// --- Employee Schema ---
+const employeeSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  designation: { type: String, required: true },
+  bio: {
+    bn: { type: String, required: true },
+    en: { type: String, required: true },
+  },
+  imageURL: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+});
 
+const Employee = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
 // --- API Routes ---
 
 // ১. এডমিন লগইন রুট
@@ -146,6 +158,40 @@ app.delete('/api/news/:id', async (req, res) => {
     if (!deletedNews)
       return res.status(404).json({ message: 'News not found' });
     res.json({ success: true, message: 'News deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Employee Routes ──────────────────────────────────────────────────────
+// GET /api/employees - Public endpoint to fetch all employees
+app.get('/api/employees', async (req, res) => {
+  try {
+    const employees = await Employee.find().sort({ createdAt: -1 });
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/employees - Admin only (Add new employee)
+app.post('/api/employees', async (req, res) => {
+  try {
+    const newEmployee = new Employee(req.body);
+    await newEmployee.save();
+    res.json({ success: true, message: 'Employee added successfully!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/employees/:id - Admin only (Delete employee)
+app.delete('/api/employees/:id', async (req, res) => {
+  try {
+    const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
+    if (!deletedEmployee)
+      return res.status(404).json({ message: 'Employee not found' });
+    res.json({ success: true, message: 'Employee deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

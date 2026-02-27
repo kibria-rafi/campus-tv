@@ -49,6 +49,12 @@ export default function Navbar({ lang, setLang }) {
               {t.news}
             </Link>
             <Link
+              to="/about"
+              className="hover:text-brandRed transition underline-offset-4 hover:underline"
+            >
+              {t.about}
+            </Link>
+            <Link
               to="/contact"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
             >
@@ -129,6 +135,13 @@ export default function Navbar({ lang, setLang }) {
                 className="py-2 border-b border-border hover:text-brandRed"
               >
                 {t.news}
+              </Link>
+              <Link
+                to="/about"
+                onClick={() => setIsOpen(false)}
+                className="py-2 border-b border-border hover:text-brandRed"
+              >
+                {t.about}
               </Link>
               <Link
                 to="/contact"
