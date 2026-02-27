@@ -1,5 +1,6 @@
 export const translations = {
   bn: {
+    home: 'হোম',
     news: 'সংবাদ',
     live: 'লাইভ',
     latest: 'সর্বশেষ আপডেট',
@@ -7,6 +8,7 @@ export const translations = {
     followUs: 'আমাদের অনুসরণ করুন',
   },
   en: {
+    home: 'Home',
     news: 'News',
     live: 'LIVE',
     latest: 'Latest Updates',

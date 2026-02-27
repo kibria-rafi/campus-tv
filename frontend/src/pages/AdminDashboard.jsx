@@ -15,7 +15,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
-    if (!token) navigate('/login');
+    if (!token) navigate('/admin');
     fetchNews();
   }, [navigate]);
 
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center bg-card p-6 shadow-sm rounded-2xl border border-border">
         <h1 className="text-2xl font-black text-foreground uppercase italic tracking-tighter">Campus TV Admin</h1>
-        <button onClick={() => {localStorage.removeItem('adminToken'); navigate('/login');}} className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full font-bold hover:bg-brandRed transition-all">
+        <button onClick={() => {localStorage.removeItem('adminToken'); navigate('/admin');}} className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full font-bold hover:bg-brandRed transition-all">
           <LogOut size={18} /> Logout
         </button>
       </div>

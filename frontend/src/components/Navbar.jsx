@@ -6,7 +6,6 @@ import {
   X,
   PlayCircle,
   Globe,
-  UserCircle,
   Radio,
   Sun,
   Moon,
@@ -74,18 +73,7 @@ export default function Navbar({ lang, setLang }) {
               </select>
             </div>
 
-            {/* ৩. প্রোফাইল/লগইন আইকন */}
-            <Link
-              to="/login"
-              className="text-foreground hover:text-brandRed transition"
-            >
-              <UserCircle
-                size={32}
-                strokeWidth={1.5}
-              />
-            </Link>
-
-            {/* ৪. থিম টোগল বাটন */}
+            {/* থিম টোগল বাটন */}
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -151,15 +139,6 @@ export default function Navbar({ lang, setLang }) {
               </Link>
 
               <div className="flex flex-col space-y-3 pt-2">
-                <Link
-                  to="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center space-x-2 bg-muted text-foreground py-3 rounded-md"
-                >
-                  <UserCircle size={20} />
-                  <span>লগইন / সাইন আপ</span>
-                </Link>
-
                 {/* মোবাইল ভিডিও বাটন */}
                 <Link
                   to="/video"

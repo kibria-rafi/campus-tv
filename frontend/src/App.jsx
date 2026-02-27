@@ -10,17 +10,16 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import NewsDetails from './pages/NewsDetails';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
 
-import Live from './pages/Live'; // নতুন যোগ করা হয়েছে
+import Live from './pages/Live';
 import VideoArchive from './pages/VideoArchive';
 import Contact from './pages/Contact';
 import New from './pages/New';
-// প্রোটেক্টেড রাউট ফাংশন
+// প্রোটেক্টেড রাউট ফাংশন - Admin Dashboard এর জন্য
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/admin" />;
 };
 
 function App() {
@@ -70,18 +69,16 @@ function App() {
                     path="/news/:id"
                     element={<NewsDetails lang={lang} />}
                   />
-                  <Route
-                    path="/login"
-                    element={<Login lang={lang} />}
-                  />
-                  <Route
-                    path="/signup"
-                    element={<Signup lang={lang} />}
-                  />
 
-                  {/* অ্যাডমিন ড্যাশবোর্ড রাউট - প্রোটেক্টেড */}
+                  {/* অ্যাডমিন লগইন - /admin এ Admin Login পেজ দেখাবে */}
                   <Route
                     path="/admin"
+                    element={<Login lang={lang} />}
+                  />
+
+                  {/* অ্যাডমিন ড্যাশবোর্ড - প্রোটেক্টেড */}
+                  <Route
+                    path="/dashboard"
                     element={
                       <ProtectedRoute>
                         <AdminDashboard lang={lang} />

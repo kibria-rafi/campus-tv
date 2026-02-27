@@ -18,20 +18,20 @@ export default function Login({ lang }) {
       const data = await res.json();
 
       if (data.success) {
-        localStorage.setItem('adminToken', data.token); // টোকেন সেভ করা
-        navigate('/admin'); // সরাসরি অ্যাডমিন ড্যাশবোর্ডে নিয়ে যাবে
+        localStorage.setItem('adminToken', data.token);
+        navigate('/dashboard'); // Redirect to dashboard after successful login
       } else {
         alert(isBn ? "ইউজারনেম বা পাসওয়ার্ড ভুল!" : "Invalid username or password!");
       }
     } catch (err) {
-      alert("সার্ভার কানেকশন এরর! ব্যাকএন্ড কি চালু আছে?");
+      alert(isBn ? "সার্ভার কানেকশন এরর!" : "Server connection error!");
     }
   };
 
   return (
     <div className="max-w-md mx-auto my-10 bg-card text-card-foreground p-8 rounded-lg shadow-xl border-t-4 border-brandRed">
       <h2 className="text-3xl font-black text-center text-foreground mb-6 uppercase italic">
-        {isBn ? 'লগইন করুন' : 'Login'}
+        {isBn ? 'অ্যাডমিন লগইন' : 'Admin Login'}
       </h2>
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
