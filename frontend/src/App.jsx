@@ -13,8 +13,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
 
-import Live from './pages/Live'; // নতুন যোগ করা হয়েছে
-
+import Live from './pages/Live'; // নতুন যোগ করা হয়েছে
+import VideoArchive from './pages/VideoArchive';
 // প্রোটেক্টেড রাউট ফাংশন
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
@@ -51,6 +51,10 @@ function App() {
                   <Route
                     path="/"
                     element={<Home lang={lang} />}
+                  />
+                  <Route
+                    path="/video"
+                    element={<VideoArchive lang={lang} />}
                   />
                   <Route
                     path="/news/:id"
