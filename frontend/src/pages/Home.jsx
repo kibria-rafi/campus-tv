@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Ticker from '../components/Ticker';
-import HlsPlayer from '../components/HlsPlayer';
+import LivePlayer from '../components/LivePlayer';
 import { translations } from '../data';
-
-const HLS_STREAM_URL = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
 
 export default function Home({ lang }) {
   const [newsList, setNewsList] = useState([]);
@@ -29,12 +27,9 @@ export default function Home({ lang }) {
 
   return (
     <div className="space-y-6">
-      {/* ── HLS Stream Player (pinned at top) ── */}
-      <section className="w-full">
-        <HlsPlayer
-          src={HLS_STREAM_URL}
-          title="Live Stream"
-        />
+      {/* ── Live / Archive Player (pinned at top) ── */}
+      <section className="w-full max-w-3xl mx-auto">
+        <LivePlayer title="Live Stream" />
       </section>
 
       {/* টিচারে এখন আসল খবর স্ক্রল করবে */}

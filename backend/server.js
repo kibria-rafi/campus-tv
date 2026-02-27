@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const { XMLParser } = require('fast-xml-parser');
 require('dotenv').config();
 
 const app = express();
@@ -95,6 +96,58 @@ app.delete('/api/news/:id', async (req, res) => {
     res.json({ success: true, message: 'News deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── YouTube RSS Route ────────────────────────────────────────────────────
+// Simple in-memory cache (5-minute TTL)
+const YOUTUBE_CHANNEL_ID = 'UCTSpN9ivGWfXz9vVXMUjVcw';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+let ytCache = { videoIds: null, timestamp: 0 };
+
+app.get('/api/youtube/latest', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const now = Date.now();
+
+    // Return cached result if still fresh
+    if (ytCache.videoIds && now - ytCache.timestamp < CACHE_TTL_MS) {
+      return res.json({ videoIds: ytCache.videoIds.slice(0, limit) });
+    }
+
+    // Fetch RSS feed from YouTube
+    const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
+    const response = await fetch(rssUrl);
+    if (!response.ok) {
+      throw new Error(`YouTube RSS responded with ${response.status}`);
+    }
+    const xmlText = await response.text();
+
+    // Parse XML safely
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '@_',
+    });
+    const parsed = parser.parse(xmlText);
+
+    // Extract video IDs from <yt:videoId> nodes
+    const entries = parsed?.feed?.entry ?? [];
+    const entryArray = Array.isArray(entries) ? entries : [entries];
+    const videoIds = entryArray.map((e) => e['yt:videoId']).filter(Boolean);
+
+    if (!videoIds.length) {
+      return res.status(502).json({ error: 'No videos found in RSS feed' });
+    }
+
+    // Store in cache
+    ytCache = { videoIds, timestamp: now };
+
+    return res.json({ videoIds: videoIds.slice(0, limit) });
+  } catch (err) {
+    console.error('YouTube RSS error:', err.message);
+    res
+      .status(502)
+      .json({ error: 'Failed to fetch YouTube archive', details: err.message });
   }
 });
 
