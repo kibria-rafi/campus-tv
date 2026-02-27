@@ -6,7 +6,7 @@ export default function Live() {
   const { count, status } = useLiveViewers();
 
   return (
-    <section className="min-h-screen bg-neutral-950 text-white flex flex-col">
+    <section className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="w-full max-w-6xl mx-auto px-4 py-12 flex flex-col gap-8 grow">
         {/* Page header */}
         <div className="space-y-3">
@@ -30,7 +30,7 @@ export default function Live() {
           <h1 className="text-4xl md:text-5xl font-black tracking-tight">
             Live Broadcast
           </h1>
-          <p className="text-neutral-400 text-sm md:text-base max-w-xl">
+          <p className="text-muted-foreground text-sm md:text-base max-w-xl">
             Watch Campus TV live — breaking news, campus updates, and more.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default function Live() {
         </div>
 
         {/* Footer note */}
-        <p className="text-center text-neutral-600 text-xs pb-4">
+        <p className="text-center text-muted-foreground text-xs pb-4">
           Campus TV Live &mdash; Official Broadcast
         </p>
       </div>

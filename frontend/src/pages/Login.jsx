@@ -16,7 +16,7 @@ export default function Login({ lang }) {
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      
+
       if (data.success) {
         localStorage.setItem('adminToken', data.token); // টোকেন সেভ করা
         navigate('/admin'); // সরাসরি অ্যাডমিন ড্যাশবোর্ডে নিয়ে যাবে
@@ -29,16 +29,16 @@ export default function Login({ lang }) {
   };
 
   return (
-    <div className="max-w-md mx-auto my-10 bg-white p-8 rounded-lg shadow-xl border-t-4 border-brandRed">
-      <h2 className="text-3xl font-black text-center text-brandBlack mb-6 uppercase italic">
+    <div className="max-w-md mx-auto my-10 bg-card text-card-foreground p-8 rounded-lg shadow-xl border-t-4 border-brandRed">
+      <h2 className="text-3xl font-black text-center text-foreground mb-6 uppercase italic">
         {isBn ? 'লগইন করুন' : 'Login'}
       </h2>
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold mb-1">{isBn ? 'ইউজারনেম' : 'Username'}</label>
-          <input 
-            type="text" // 'email' থেকে বদলে 'text' করা হয়েছে
-            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-brandRed" 
+          <label className="block text-sm font-bold mb-1 text-foreground">{isBn ? 'ইউজারনেম' : 'Username'}</label>
+          <input
+            type="text"
+            className="w-full border border-border bg-background text-foreground placeholder:text-muted-foreground p-2 rounded focus:outline-none focus:border-brandRed"
             placeholder="admin"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -46,10 +46,10 @@ export default function Login({ lang }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-bold mb-1">{isBn ? 'পাসওয়ার্ড' : 'Password'}</label>
-          <input 
-            type="password" 
-            className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-brandRed" 
+          <label className="block text-sm font-bold mb-1 text-foreground">{isBn ? 'পাসওয়ার্ড' : 'Password'}</label>
+          <input
+            type="password"
+            className="w-full border border-border bg-background text-foreground placeholder:text-muted-foreground p-2 rounded focus:outline-none focus:border-brandRed"
             placeholder="*******"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

@@ -26,7 +26,7 @@ function App() {
 
   return (
     <Router>
-      <div className="bg-gray-50 min-h-screen font-sans flex flex-col">
+      <div className="bg-background text-foreground min-h-screen font-sans flex flex-col">
         <Navbar
           lang={lang}
           setLang={setLang}

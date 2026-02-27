@@ -43,10 +43,10 @@ export default function LivePlayer({
 
   return (
     <div
-      className={`w-full ${outerWidth} mx-auto bg-neutral-900 rounded-xl shadow-2xl overflow-hidden`}
+      className={`w-full ${outerWidth} mx-auto bg-card rounded-xl shadow-2xl overflow-hidden`}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3 px-5 py-3 bg-neutral-800">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-3 bg-muted border-b border-border">
         {/* Pulsing live/archive dot */}
         <span className="relative flex h-3 w-3 shrink-0">
           <span
@@ -61,7 +61,7 @@ export default function LivePlayer({
           />
         </span>
 
-        <h2 className="text-white font-bold text-lg tracking-wide uppercase">
+        <h2 className="text-foreground font-bold text-lg tracking-wide uppercase">
           {title}
         </h2>
 

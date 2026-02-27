@@ -40,34 +40,34 @@ export default function VideoGallery({ lang }) {
     <div className="max-w-7xl mx-auto my-10 px-4">
       {/* Header Section */}
       <div className="flex items-center gap-3 mb-10 border-l-8 border-brandRed pl-4">
-        <h2 className="text-3xl md:text-4xl font-black text-brandBlack uppercase italic">
+        <h2 className="text-3xl md:text-4xl font-black text-foreground uppercase italic">
           {lang === 'bn' ? 'ভিডিও গ্যালারি' : 'Video Gallery'}
         </h2>
       </div>
 
       {videos.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-          <p className="text-gray-500 font-bold italic">
+        <div className="text-center py-20 bg-muted rounded-2xl border-2 border-dashed border-border">
+          <p className="text-muted-foreground font-bold italic">
             {lang === 'bn' ? 'কোনো ভিডিও পাওয়া যায়নি!' : 'No videos found!'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {videos.map((item) => (
-            <Link 
-              to={`/news/${item._id}`} 
-              key={item._id} 
-              className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+            <Link
+              to={`/news/${item._id}`}
+              key={item._id}
+              className="group bg-card text-card-foreground rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-border"
             >
               {/* Thumbnail Section */}
-              <div className="relative aspect-video overflow-hidden bg-gray-200">
-                <img 
-                  src={item.image || `https://img.youtube.com/vi/${item.videoUrl}/mqdefault.jpg`} 
-                  alt={item.title[lang]} 
+              <div className="relative aspect-video overflow-hidden bg-muted">
+                <img
+                  src={item.image || `https://img.youtube.com/vi/${item.videoUrl}/mqdefault.jpg`}
+                  alt={item.title[lang]}
                   onError={(e) => handleImageError(e, item.videoUrl)}
                   className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
                 />
-                
+
                 {/* Play Button Overlay */}
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                    <PlayCircle size={64} className="text-white drop-shadow-2xl" />
@@ -86,14 +86,14 @@ export default function VideoGallery({ lang }) {
                     {item.category?.[lang] || (lang === 'bn' ? 'ক্যাম্পাস' : 'Campus')}
                    </span>
                 </div>
-                
-                <h3 className="text-lg font-bold text-brandBlack leading-[1.2] group-hover:text-brandRed transition-colors line-clamp-2 italic">
+
+                <h3 className="text-lg font-bold text-card-foreground leading-[1.2] group-hover:text-brandRed transition-colors line-clamp-2 italic">
                   {item.title[lang]}
                 </h3>
 
-                <div className="mt-5 pt-4 border-t border-gray-50 flex items-center justify-between text-gray-400 text-[11px] font-bold">
+                <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-muted-foreground text-[11px] font-bold">
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-gray-300" />
+                    <Clock size={14} className="text-muted-foreground" />
                     <span>{new Date(item.createdAt).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')}</span>
                   </div>
                   <span className="text-brandRed font-black uppercase text-[9px] tracking-tighter group-hover:translate-x-1 transition-transform">

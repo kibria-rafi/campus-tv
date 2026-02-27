@@ -39,7 +39,7 @@ export default function YouTubeArchivePlayer() {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center aspect-video bg-neutral-900 rounded-xl text-neutral-400 text-sm">
+      <div className="flex items-center justify-center aspect-video bg-muted rounded-xl text-muted-foreground text-sm">
         Loading archive videos…
       </div>
     );
@@ -47,11 +47,11 @@ export default function YouTubeArchivePlayer() {
 
   if (status === 'error') {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 aspect-video bg-neutral-900 rounded-xl text-red-400 text-sm">
+      <div className="flex flex-col items-center justify-center gap-4 aspect-video bg-muted rounded-xl text-destructive text-sm">
         <span>Could not load archive videos.</span>
         <button
           onClick={handleRetry}
-          className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg text-sm transition"
+          className="px-4 py-2 bg-secondary text-secondary-foreground hover:opacity-80 rounded-lg text-sm transition"
         >
           Retry
         </button>

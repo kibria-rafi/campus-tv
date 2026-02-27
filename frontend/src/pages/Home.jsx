@@ -65,7 +65,7 @@ export default function Home({ lang }) {
 
         {/* সাইডবার লিস্ট */}
         <div className="lg:col-span-4 space-y-6">
-          <h3 className="text-2xl font-black border-l-8 border-brandRed pl-3 uppercase text-brandBlack italic">
+          <h3 className="text-2xl font-black border-l-8 border-brandRed pl-3 uppercase text-foreground italic">
             {t.latest}
           </h3>
           <div className="space-y-4">
@@ -73,7 +73,7 @@ export default function Home({ lang }) {
               <Link
                 key={news._id}
                 to={`/news/${news._id}`}
-                className="flex gap-4 border-b border-gray-200 pb-4 group"
+                className="flex gap-4 border-b border-border pb-4 group"
               >
                 <div className="min-w-[120px]">
                   <img
