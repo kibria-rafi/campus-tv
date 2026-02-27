@@ -14,7 +14,7 @@ export default function Footer({ lang = 'bn' }) {
             <img
               src={logo}
               alt="Campus TV Logo"
-              className="h-9 md:h-12 w-auto object-contain"
+              className="h-20 md:h-12 w-auto object-contain"
             />
           </div>
 

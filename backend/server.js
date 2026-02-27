@@ -51,11 +51,17 @@ const newsSchema = new mongoose.Schema({
     bn: { type: String, required: true },
     en: { type: String, required: true },
   },
+  subtitle: {
+    bn: { type: String, default: '' },
+    en: { type: String, default: '' },
+  },
   description: {
     bn: { type: String, required: true },
     en: { type: String, required: true },
   },
   image: String,
+  imageCaption: { type: String, default: '' },
+  reporterName: { type: String, default: '' },
   category: {
     bn: { type: String, default: 'সাধারণ' },
     en: { type: String, default: 'General' },
@@ -88,11 +94,18 @@ app.post('/api/admin/login', (req, res) => {
 // ২. নিউজ গেট করার রুট — ভিডিও ও লাইভ পোস্ট বাদ দেওয়া হয়েছে
 app.get('/api/news', async (req, res) => {
   try {
+    const limit = req.query.limit ? parseInt(req.query.limit) : null;
     // Return only plain articles: no videoUrl and not isLive
-    const news = await News.find({
+    let query = News.find({
       $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
       isLive: { $ne: true },
     }).sort({ createdAt: -1 });
+    
+    if (limit && limit > 0) {
+      query = query.limit(limit);
+    }
+    
+    const news = await query;
     res.json(news);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Send, Trash2, Edit3, XCircle, FileText } from 'lucide-react';
 
 const emptyForm = {
-  titleBn: '', titleEn: '', descBn: '', descEn: '', image: '', catBn: 'শিক্ষা', catEn: 'Education',
+  titleBn: '', titleEn: '', subtitleBn: '', subtitleEn: '', descBn: '', descEn: '', 
+  image: '', imageCaption: '', reporterName: '', catBn: 'শিক্ষা', catEn: 'Education',
 };
 
 export default function AdminDashboard() {
@@ -38,8 +39,11 @@ export default function AdminDashboard() {
 
     const payload = {
       title: { bn: news.titleBn, en: news.titleEn },
+      subtitle: { bn: news.subtitleBn || '', en: news.subtitleEn || '' },
       description: { bn: news.descBn, en: news.descEn || news.descBn },
       image: news.image,
+      imageCaption: news.imageCaption || '',
+      reporterName: news.reporterName || '',
       category: { bn: news.catBn || 'সাধারণ', en: news.catEn || 'General' },
     };
 
@@ -99,8 +103,18 @@ export default function AdminDashboard() {
                 <input type="text" placeholder="Headline (English)" className="w-full border-b-2 border-border bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none focus:border-brandRed font-bold text-lg" value={news.titleEn} onChange={(e)=>setNews({...news, titleEn: e.target.value})} required />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="text" placeholder="সাবটাইটেল (বাংলা)" className="w-full border-b-2 border-border bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none focus:border-brandRed" value={news.subtitleBn} onChange={(e)=>setNews({...news, subtitleBn: e.target.value})} />
+                <input type="text" placeholder="Subtitle (English)" className="w-full border-b-2 border-border bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none focus:border-brandRed" value={news.subtitleEn} onChange={(e)=>setNews({...news, subtitleEn: e.target.value})} />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <input type="text" placeholder="Image URL (Thumbnail)" className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed" value={news.image} onChange={(e)=>setNews({...news, image: e.target.value})} required />
+                 <input type="text" placeholder="Image Caption" className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed" value={news.imageCaption} onChange={(e)=>setNews({...news, imageCaption: e.target.value})} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <input type="text" placeholder="প্রতিবেদকের নাম / Reporter Name" className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed" value={news.reporterName} onChange={(e)=>setNews({...news, reporterName: e.target.value})} />
                  <div className="flex gap-2">
                     <input type="text" placeholder="ক্যাটাগরি" className="w-1/2 border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed" value={news.catBn} onChange={(e)=>setNews({...news, catBn: e.target.value})} required />
                     <input type="text" placeholder="Category (EN)" className="w-1/2 border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed" value={news.catEn} onChange={(e)=>setNews({...news, catEn: e.target.value})} required />
@@ -143,8 +157,11 @@ export default function AdminDashboard() {
                     setEditingId(item._id);
                     setNews({
                       titleBn: item.title.bn, titleEn: item.title.en,
+                      subtitleBn: item.subtitle?.bn || '', subtitleEn: item.subtitle?.en || '',
                       descBn: item.description.bn, descEn: item.description.en,
-                      image: item.image, catEn: item.category?.en, catBn: item.category?.bn,
+                      image: item.image, imageCaption: item.imageCaption || '',
+                      reporterName: item.reporterName || '',
+                      catEn: item.category?.en, catBn: item.category?.bn,
                     });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }} className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full border border-blue-100"><Edit3 size={14}/></button>
