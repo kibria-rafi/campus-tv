@@ -245,6 +245,47 @@ app.get('/api/videos/youtube', async (req, res) => {
   }
 });
 
+// ── Contact Form Endpoint ────────────────────────────────────────────────
+// POST /api/contact
+// Accepts: { name, email, subject, message, company (honeypot) }
+app.post('/api/contact', (req, res) => {
+  const { name, email, subject, message, company } = req.body;
+
+  // Honeypot check — bots fill hidden fields; silently succeed
+  if (company && company.trim() !== '') {
+    return res.json({ success: true });
+  }
+
+  // Basic server-side validation
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Name is required.' });
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res
+      .status(400)
+      .json({ error: 'A valid email address is required.' });
+  }
+  if (!message || message.trim().length < 5) {
+    return res.status(400).json({ error: 'Message is too short.' });
+  }
+  if (message.length > 2000) {
+    return res
+      .status(400)
+      .json({ error: 'Message must be under 2000 characters.' });
+  }
+
+  // Log submission (replace with nodemailer / DB save as needed)
+  console.log('📬 Contact form submission:', {
+    name: name.trim(),
+    email: email.trim(),
+    subject: subject || 'General',
+    message: message.trim(),
+    receivedAt: new Date().toISOString(),
+  });
+
+  return res.json({ success: true, message: 'Message received.' });
+});
+
 const startServer = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);

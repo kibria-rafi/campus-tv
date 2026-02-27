@@ -10,6 +10,7 @@ import {
   Radio,
   Sun,
   Moon,
+  MessageSquare,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -60,6 +61,12 @@ export default function Navbar({ lang, setLang }) {
             >
               {t.career}
             </a>
+            <Link
+              to="/contact"
+              className="hover:text-brandRed transition underline-offset-4 hover:underline"
+            >
+              {t.contact || 'Contact'}
+            </Link>
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-6">
@@ -158,6 +165,13 @@ export default function Navbar({ lang, setLang }) {
               >
                 {t.career}
               </a>
+              <Link
+                to="/contact"
+                onClick={() => setIsOpen(false)}
+                className="py-2 border-b border-border hover:text-brandRed"
+              >
+                {t.contact || 'Contact'}
+              </Link>
 
               <div className="flex flex-col space-y-3 pt-2">
                 <Link
@@ -178,6 +192,16 @@ export default function Navbar({ lang, setLang }) {
                 >
                   <PlayCircle size={20} />
                   <span>ভিডিও</span>
+                </Link>
+
+                {/* মোবাইল কন্ট্যাক্ট বাটন */}
+                <Link
+                  to="/contact"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center gap-2 bg-muted text-foreground border border-border py-3 rounded-md font-bold hover:border-brandRed hover:text-brandRed transition"
+                >
+                  <MessageSquare size={18} />
+                  <span>{t.contact || 'Contact'}</span>
                 </Link>
 
                 {/* মোবাইল লাইভ বাটন */}
