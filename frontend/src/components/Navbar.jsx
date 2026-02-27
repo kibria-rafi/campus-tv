@@ -63,18 +63,6 @@ export default function Navbar({ lang, setLang }) {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-6">
-            {/* ২. ভিডিও গ্যালারি বাটন (Link যোগ করা হয়েছে) */}
-            <Link
-              to="/video-gallery"
-              className="hidden sm:flex items-center space-x-2 bg-primary text-primary-foreground px-3 py-2 rounded-md font-bold hover:opacity-90 transition shadow-lg"
-            >
-              <PlayCircle
-                size={20}
-                className="text-brandRed"
-              />
-              <span className="text-sm md:text-base">ভিডিও</span>
-            </Link>
-
             {/* ভাষা পরিবর্তন */}
             <div className="flex items-center space-x-1 border border-border rounded px-2 py-1 bg-muted">
               <Globe
@@ -110,7 +98,18 @@ export default function Navbar({ lang, setLang }) {
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-
+            {/* ভিডিও বাটন */}
+            <Link
+              to="/video"
+              aria-label="Video"
+              className="hidden sm:flex items-center space-x-2 bg-primary text-primary-foreground px-3 py-2 rounded-md font-bold hover:opacity-90 transition shadow-lg"
+            >
+              <PlayCircle
+                size={20}
+                className="text-brandRed"
+              />
+              <span className="text-sm md:text-base">ভিডিও</span>
+            </Link>
             {/* ৪. লাইভ বাটন (Link যোগ করা হয়েছে) */}
             <Link
               to="/live"
@@ -172,12 +171,13 @@ export default function Navbar({ lang, setLang }) {
 
                 {/* মোবাইল ভিডিও বাটন */}
                 <Link
-                  to="/video-gallery"
+                  to="/video"
+                  aria-label="Video"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center justify-center space-x-2 bg-primary text-primary-foreground py-3 rounded-md"
                 >
                   <PlayCircle size={20} />
-                  <span>ভিডিও গ্যালারি</span>
+                  <span>ভিডিও</span>
                 </Link>
 
                 {/* মোবাইল লাইভ বাটন */}

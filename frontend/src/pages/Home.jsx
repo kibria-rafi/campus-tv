@@ -14,7 +14,11 @@ export default function Home({ lang }) {
     fetch('http://localhost:5001/api/news')
       .then((res) => res.json())
       .then((data) => {
-        setNewsList(data);
+        // Filter out video posts (non-empty videoUrl that are not live)
+        const articles = data.filter(
+          (item) => !item.videoUrl || item.videoUrl.trim() === '' || item.isLive === true
+        );
+        setNewsList(articles);
         setLoading(false);
       })
       .catch((err) => console.error('Error fetching news:', err));

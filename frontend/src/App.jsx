@@ -12,7 +12,7 @@ import NewsDetails from './pages/NewsDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
-import VideoGallery from './pages/VideoGallery'; // নতুন যোগ করা হয়েছে
+
 import Live from './pages/Live'; // নতুন যোগ করা হয়েছে
 
 // প্রোটেক্টেড রাউট ফাংশন
@@ -63,12 +63,6 @@ function App() {
                   <Route
                     path="/signup"
                     element={<Signup lang={lang} />}
-                  />
-
-                  {/* ভিডিও রাউট */}
-                  <Route
-                    path="/video-gallery"
-                    element={<VideoGallery lang={lang} />}
                   />
 
                   {/* অ্যাডমিন ড্যাশবোর্ড রাউট - প্রোটেক্টেড */}

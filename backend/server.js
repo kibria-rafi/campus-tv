@@ -85,20 +85,25 @@ app.post('/api/admin/login', (req, res) => {
   res.status(401).json({ success: false, message: 'Invalid credentials' });
 });
 
-// ২. নিউজ গেট করার রুট (সব খবর একসাথে)
+// ২. নিউজ গেট করার রুট — ভিডিও ও লাইভ পোস্ট বাদ দেওয়া হয়েছে
 app.get('/api/news', async (req, res) => {
   try {
-    const news = await News.find().sort({ createdAt: -1 });
+    // Return only plain articles: no videoUrl and not isLive
+    const news = await News.find({
+      $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
+      isLive: { $ne: true },
+    }).sort({ createdAt: -1 });
     res.json(news);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ৩. নিউজ পোস্ট করার রুট
+// ৩. নিউজ পোস্ট করার রুট — videoUrl ও isLive সর্বদা নিষ্ক্রিয়
 app.post('/api/news', async (req, res) => {
   try {
-    const newNews = new News(req.body);
+    const body = { ...req.body, videoUrl: '', isLive: false };
+    const newNews = new News(body);
     await newNews.save();
     res.json({ success: true, message: 'News published!' });
   } catch (err) {
@@ -106,10 +111,11 @@ app.post('/api/news', async (req, res) => {
   }
 });
 
-// ৪. নিউজ আপডেট/এডিট করার রুট
+// ৪. নিউজ আপডেট/এডিট করার রুট — videoUrl ও isLive সর্বদা নিষ্ক্রিয়
 app.put('/api/news/:id', async (req, res) => {
   try {
-    const updatedNews = await News.findByIdAndUpdate(req.params.id, req.body, {
+    const body = { ...req.body, videoUrl: '', isLive: false };
+    const updatedNews = await News.findByIdAndUpdate(req.params.id, body, {
       new: true,
     });
     if (!updatedNews)
