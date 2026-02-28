@@ -8,6 +8,7 @@ export const translations = {
     contact: 'যোগাযোগ',
     about: 'আমাদের সম্পর্কে',
     followUs: 'আমাদের অনুসরণ করুন',
+    seeMore: 'আরো দেখুন',
   },
   en: {
     home: 'Home',
@@ -18,6 +19,7 @@ export const translations = {
     contact: 'Contact',
     about: 'About Us',
     followUs: 'Follow Us',
+    seeMore: 'See more',
   },
 };
 

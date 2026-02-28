@@ -8,6 +8,7 @@ import { API_BASE } from '../config/api';
 export default function Home({ lang }) {
   const [newsList, setNewsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(11);
   const t = translations[lang];
 
   useEffect(() => {
@@ -89,8 +90,8 @@ export default function Home({ lang }) {
               </div>
             </Link>
 
-            {/* Normal cards — items 2–16 */}
-            {newsList.slice(1, 16).map((news) => (
+            {/* Normal cards — items 2–visibleCount */}
+            {newsList.slice(1, visibleCount).map((news) => (
               <Link
                 key={news._id}
                 to={`/news/${news._id}`}
@@ -115,6 +116,18 @@ export default function Home({ lang }) {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+
+        {/* See More Button */}
+        {newsList.length > 11 && visibleCount < newsList.length && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => setVisibleCount(newsList.length)}
+              className="px-8 py-3 bg-brandRed text-white font-bold rounded-md hover:bg-red-700 transition-all duration-300 hover:shadow-lg transform hover:scale-105 uppercase text-sm"
+            >
+              {t.seeMore}
+            </button>
           </div>
         )}
       </section>

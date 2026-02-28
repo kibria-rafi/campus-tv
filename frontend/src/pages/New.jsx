@@ -2,24 +2,17 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Newspaper } from 'lucide-react';
 import { API_BASE } from '../config/api';
+import { translations } from '../data';
 
 export default function New({ lang }) {
   const [newsList, setNewsList] = useState([]);
-  const [displayedNews, setDisplayedNews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const [limit, setLimit] = useState(9);
+  const t = translations[lang];
 
   useEffect(() => {
     fetchNews();
   }, []);
-
-  useEffect(() => {
-    // Update displayed news when page changes
-    const endIndex = currentPage * itemsPerPage;
-    setDisplayedNews(newsList.slice(0, endIndex));
-  }, [currentPage, newsList]);
 
   const fetchNews = async () => {
     try {
@@ -27,7 +20,6 @@ export default function New({ lang }) {
       const res = await fetch(`${API_BASE}/api/news`);
       const data = await res.json();
       setNewsList(data);
-      setDisplayedNews(data.slice(0, itemsPerPage));
       setLoading(false);
     } catch (err) {
       console.error('Error fetching news:', err);
@@ -36,11 +28,7 @@ export default function New({ lang }) {
   };
 
   const handleLoadMore = () => {
-    setLoadingMore(true);
-    setTimeout(() => {
-      setCurrentPage((prev) => prev + 1);
-      setLoadingMore(false);
-    }, 300);
+    setLimit(newsList.length);
   };
 
   const handleImageError = (e) => {
@@ -104,7 +92,7 @@ export default function New({ lang }) {
       {/* Loading State */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(12)].map((_, index) => (
+          {[...Array(9)].map((_, index) => (
             <NewsCardSkeleton key={index} />
           ))}
         </div>
@@ -114,7 +102,7 @@ export default function New({ lang }) {
         <>
           {/* News Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedNews.map((news) => (
+            {newsList.slice(0, limit).map((news) => (
               <Link
                 key={news._id}
                 to={`/news/${news._id}`}
@@ -165,40 +153,17 @@ export default function New({ lang }) {
             ))}
           </div>
 
-          {/* Load More Button */}
-          {displayedNews.length < newsList.length && (
+          {/* See More Button */}
+          {newsList.length > 9 && limit < newsList.length && (
             <div className="flex justify-center mt-8">
               <button
                 onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="px-8 py-3 bg-brandRed text-white font-bold rounded-full hover:bg-black transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-8 py-3 bg-brandRed text-white font-bold rounded-md hover:bg-red-700 transition-all duration-300 hover:shadow-lg transform hover:scale-105 uppercase text-sm"
               >
-                {loadingMore ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>{lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{lang === 'bn' ? 'আরও দেখুন' : 'Load More'}</span>
-                    <span className="text-sm opacity-75">
-                      ({displayedNews.length} / {newsList.length})
-                    </span>
-                  </>
-                )}
+                {t.seeMore}
               </button>
             </div>
           )}
-
-          {/* All Loaded Message */}
-          {displayedNews.length === newsList.length &&
-            newsList.length > itemsPerPage && (
-              <div className="text-center text-muted-foreground text-sm py-4">
-                {lang === 'bn'
-                  ? '✓ সকল সংবাদ দেখানো হয়েছে'
-                  : '✓ All news articles loaded'}
-              </div>
-            )}
         </>
       )}
     </div>
