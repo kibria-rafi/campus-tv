@@ -1,5 +1,4 @@
-/* index.css ফাইলের একদম উপরে এটি পেস্ট করুন */
-@import url('https://fonts.maateen.me/shurjo/font.css');
+@import url('https://fonts.maateen.me/solaiman-lipi/font.css');
 @import 'tailwindcss';
 
 /*
@@ -82,9 +81,10 @@
 /* ── Base styles ─────────────────────────────────────────────────────────── */
 @layer base {
   * {
-    font-family: 'Shurjo', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'SolaimanLipi', sans-serif;
   }
   body {
+    font-family: 'SolaimanLipi', sans-serif;
     background: hsl(var(--background));
     color: hsl(var(--foreground));
   }

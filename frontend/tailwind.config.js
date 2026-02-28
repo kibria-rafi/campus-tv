@@ -29,7 +29,7 @@ export default {
         'destructive-foreground': 'hsl(var(--destructive-foreground))',
       },
       fontFamily: {
-        sans: ['Shurjo', 'sans-serif'],
+        sans: ['SolaimanLipi', 'sans-serif'],
       },
     },
   },
