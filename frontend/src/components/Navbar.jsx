@@ -21,16 +21,16 @@ export default function Navbar({ lang, setLang }) {
   return (
     <nav className="bg-card border-b-4 border-brandRed sticky top-0 z-50 shadow-md">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-3 md:py-4">
+        <div className="flex items-center justify-between h-16 py-0 md:py-4">
           {/* ১. লোগো সেকশন */}
           <Link
             to="/"
-            className="flex items-center cursor-pointer"
+            className="flex items-center flex-shrink-0 cursor-pointer"
           >
             <img
               src="/logo.png"
               alt="Campus TV Logo"
-              className="h-12 md:h-16 w-auto object-contain"
+              className="h-10 w-auto object-contain"
             />
           </Link>
 
@@ -62,7 +62,8 @@ export default function Navbar({ lang, setLang }) {
             </Link>
           </div>
 
-          <div className="flex items-center space-x-3 md:space-x-6">
+          {/* DESKTOP TOP BAR: Language, Theme, Video, Live */}
+          <div className="hidden md:flex items-center gap-3 md:gap-6">
             {/* ভাষা পরিবর্তন */}
             <div className="flex items-center space-x-1 border border-border rounded px-2 py-1 bg-muted">
               <Globe
@@ -91,7 +92,7 @@ export default function Navbar({ lang, setLang }) {
             <Link
               to="/video"
               aria-label="Video"
-              className="hidden sm:flex items-center space-x-2 bg-primary text-primary-foreground px-3 py-2 rounded-md font-bold hover:opacity-90 transition shadow-lg"
+              className="flex items-center space-x-2 bg-primary text-primary-foreground px-3 py-2 rounded-md font-bold hover:opacity-90 transition shadow-lg"
             >
               <PlayCircle
                 size={20}
@@ -99,21 +100,43 @@ export default function Navbar({ lang, setLang }) {
               />
               <span className="text-sm md:text-base">ভিডিও</span>
             </Link>
-            {/* ৪. লাইভ বাটন (Link যোগ করা হয়েছে) */}
+            {/* লাইভ বাটন */}
             <Link
               to="/live"
-              className="hidden md:flex items-center gap-2 bg-brandRed text-white px-5 py-2 rounded font-black animate-pulse shadow-md text-sm uppercase"
+              className="flex items-center gap-2 bg-brandRed text-white px-5 py-2 rounded font-black animate-pulse shadow-md text-sm uppercase"
             >
               <Radio size={16} />
               {t.live}
             </Link>
+          </div>
+
+          {/* MOBILE TOP BAR CONTROLS (right side only): Live, Dark‑mode icon, Hamburger */}
+          <div className="flex md:hidden items-center gap-3">
+            {/* লাইভ বাটন (মোবাইল) — show full text + icon */}
+            <Link
+              to="/live"
+              className="inline-flex items-center justify-center gap-2 h-10 px-3 rounded-md text-sm font-semibold bg-brandRed text-white animate-pulse shadow-md whitespace-nowrap"
+            >
+              <Radio size={16} />
+              <span className="leading-none">{t.live}</span>
+            </Link>
+
+            {/* dark mode icon only */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-muted transition"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
             {/* মোবাইল মেনু বাটন */}
             <button
-              className="lg:hidden p-2 text-foreground hover:bg-muted rounded transition"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-muted transition"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle menu"
             >
-              {isOpen ? <X size={30} /> : <Menu size={30} />}
+              {isOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
           </div>
         </div>
@@ -121,80 +144,97 @@ export default function Navbar({ lang, setLang }) {
         {/* মোবাইল ড্রপডাউন মেনু */}
         {isOpen && (
           <div className="lg:hidden bg-popover text-popover-foreground border-t border-border pb-6 shadow-xl">
-            <div className="flex flex-col space-y-4 mt-4 px-4 font-bold text-foreground">
+            {/* Section A – main navigation */}
+            <div className="flex flex-col mt-4 px-4 font-bold text-foreground">
               <Link
                 to="/"
                 onClick={() => setIsOpen(false)}
-                className="py-2 border-b border-border hover:text-brandRed"
+                className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 হোম
               </Link>
               <Link
                 to="/news"
                 onClick={() => setIsOpen(false)}
-                className="py-2 border-b border-border hover:text-brandRed"
+                className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.news}
               </Link>
               <Link
                 to="/about"
                 onClick={() => setIsOpen(false)}
-                className="py-2 border-b border-border hover:text-brandRed"
+                className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.about}
               </Link>
               <Link
                 to="/contact"
                 onClick={() => setIsOpen(false)}
-                className="py-2 border-b border-border hover:text-brandRed"
+                className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.contact || 'Contact'}
               </Link>
 
-              <div className="flex flex-col space-y-3 pt-2">
-                {/* মোবাইল ভিডিও বাটন */}
-                <Link
-                  to="/video"
-                  aria-label="Video"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center space-x-2 bg-primary text-primary-foreground py-3 rounded-md"
-                >
-                  <PlayCircle size={20} />
-                  <span>ভিডিও</span>
-                </Link>
-
-                {/* মোবাইল কন্ট্যাক্ট বাটন */}
-                <Link
-                  to="/contact"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center gap-2 bg-muted text-foreground border border-border py-3 rounded-md font-bold hover:border-brandRed hover:text-brandRed transition"
-                >
-                  <MessageSquare size={18} />
-                  <span>{t.contact || 'Contact'}</span>
-                </Link>
-
-                {/* মোবাইল লাইভ বাটন */}
-                <Link
-                  to="/live"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center gap-2 bg-brandRed text-white py-3 rounded-md font-black animate-pulse"
-                >
-                  <Radio size={20} />
-                  {t.live}
-                </Link>
-
-                {/* মোবাইল থিম টোগল */}
-                <button
-                  onClick={() => {
-                    toggleTheme();
+              {/* ভাষা/Translate - row with chevron */}
+              <div className="relative flex items-center justify-between w-full py-4 border-b border-border text-lg">
+                <div className="flex items-center gap-3">
+                  <Globe
+                    size={16}
+                    className="text-muted-foreground"
+                  />
+                  <span className="select-none">
+                    {lang === 'bn' ? 'বাংলা' : 'EN'}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-5 h-5 text-muted-foreground"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                {/* invisible select overlay to trigger language change */}
+                <select
+                  value={lang}
+                  onChange={(e) => {
+                    setLang(e.target.value);
                     setIsOpen(false);
                   }}
-                  className="flex items-center justify-center gap-2 border border-border bg-card text-foreground py-3 rounded-md transition"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 >
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                  <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
+                  <option value="bn">বাংলা</option>
+                  <option value="en">EN</option>
+                </select>
               </div>
+            </div>
+
+            {/* Section B – quick actions */}
+            <div className="mt-6 px-4 space-y-3">
+              <Link
+                to="/video"
+                aria-label="Video"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center space-x-2 bg-primary text-primary-foreground py-3 rounded-md w-full"
+              >
+                <PlayCircle size={20} />
+                <span>ভিডিও</span>
+              </Link>
+
+              <Link
+                to="/live"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center space-x-2 bg-brandRed text-white py-3 rounded-md w-full font-black animate-pulse"
+              >
+                <Radio size={20} />
+                {t.live}
+              </Link>
             </div>
           </div>
         )}
