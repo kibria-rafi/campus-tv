@@ -40,7 +40,7 @@ export default function Navbar({ lang, setLang }) {
               to="/"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
             >
-              {t.home || 'হোম'}
+              {t.home}
             </Link>
             <Link
               to="/news"
@@ -98,7 +98,7 @@ export default function Navbar({ lang, setLang }) {
                 size={20}
                 className="text-brandRed"
               />
-              <span className="text-sm md:text-base">ভিডিও</span>
+              <span className="text-sm md:text-base">{t.video}</span>
             </Link>
             {/* লাইভ বাটন */}
             <Link
@@ -151,7 +151,7 @@ export default function Navbar({ lang, setLang }) {
                 onClick={() => setIsOpen(false)}
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
-                হোম
+                {t.home}
               </Link>
               <Link
                 to="/news"
@@ -224,7 +224,7 @@ export default function Navbar({ lang, setLang }) {
                 className="flex items-center justify-center space-x-2 bg-primary text-primary-foreground py-3 rounded-md w-full"
               >
                 <PlayCircle size={20} />
-                <span>ভিডিও</span>
+                <span>{t.video}</span>
               </Link>
 
               <Link
