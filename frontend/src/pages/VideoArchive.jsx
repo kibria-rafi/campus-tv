@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PlayCircle, X, AlertCircle, RefreshCw, Film } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
 const STEP = 12;
 const MAX = 50;
 

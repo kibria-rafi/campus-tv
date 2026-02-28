@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PlayCircle, Clock } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 export default function VideoGallery({ lang }) {
   const [videos, setVideos] = useState([]);
@@ -9,14 +10,16 @@ export default function VideoGallery({ lang }) {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const res = await fetch('http://localhost:5001/api/news');
+        const res = await fetch(`${API_BASE}/api/news`);
         const data = await res.json();
         // ভিডিও ইউআরএল আছে এমন পোস্টগুলো ফিল্টার করা
-        const onlyVideos = data.filter(item => item.videoUrl && item.videoUrl.trim() !== "");
+        const onlyVideos = data.filter(
+          (item) => item.videoUrl && item.videoUrl.trim() !== ''
+        );
         setVideos(onlyVideos);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching videos:", err);
+        console.error('Error fetching videos:', err);
         setLoading(false);
       }
     };
@@ -28,13 +31,14 @@ export default function VideoGallery({ lang }) {
     e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   };
 
-  if (loading) return (
-    <div className="flex justify-center items-center min-h-[400px]">
-      <div className="text-center py-20 font-bold animate-pulse text-brandRed">
-        {lang === 'bn' ? 'ভিডিও লোড হচ্ছে...' : 'Loading Videos...'}
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-center py-20 font-bold animate-pulse text-brandRed">
+          {lang === 'bn' ? 'ভিডিও লোড হচ্ছে...' : 'Loading Videos...'}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="max-w-7xl mx-auto my-10 px-4">
@@ -62,7 +66,10 @@ export default function VideoGallery({ lang }) {
               {/* Thumbnail Section */}
               <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                  src={item.image || `https://img.youtube.com/vi/${item.videoUrl}/mqdefault.jpg`}
+                  src={
+                    item.image ||
+                    `https://img.youtube.com/vi/${item.videoUrl}/mqdefault.jpg`
+                  }
                   alt={item.title[lang]}
                   onError={(e) => handleImageError(e, item.videoUrl)}
                   className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
@@ -70,21 +77,31 @@ export default function VideoGallery({ lang }) {
 
                 {/* Play Button Overlay */}
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                   <PlayCircle size={64} className="text-white drop-shadow-2xl" />
+                  <PlayCircle
+                    size={64}
+                    className="text-white drop-shadow-2xl"
+                  />
                 </div>
 
                 {/* Status Badge */}
                 <div className="absolute bottom-3 right-3 bg-brandRed text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-md">
-                  {item.isLive ? (lang === 'bn' ? 'লাইভ' : 'Live') : (lang === 'bn' ? 'ভিডিও' : 'Video')}
+                  {item.isLive
+                    ? lang === 'bn'
+                      ? 'লাইভ'
+                      : 'Live'
+                    : lang === 'bn'
+                      ? 'ভিডিও'
+                      : 'Video'}
                 </div>
               </div>
 
               {/* Content Section */}
               <div className="p-5">
                 <div className="flex items-center gap-2 text-brandRed text-[10px] font-black mb-3 uppercase tracking-widest">
-                   <span className="bg-brandRed/10 px-2 py-1 rounded">
-                    {item.category?.[lang] || (lang === 'bn' ? 'ক্যাম্পাস' : 'Campus')}
-                   </span>
+                  <span className="bg-brandRed/10 px-2 py-1 rounded">
+                    {item.category?.[lang] ||
+                      (lang === 'bn' ? 'ক্যাম্পাস' : 'Campus')}
+                  </span>
                 </div>
 
                 <h3 className="text-lg font-bold text-card-foreground leading-[1.2] group-hover:text-brandRed transition-colors line-clamp-2 italic">
@@ -93,8 +110,15 @@ export default function VideoGallery({ lang }) {
 
                 <div className="mt-5 pt-4 border-t border-border flex items-center justify-between text-muted-foreground text-[11px] font-bold">
                   <div className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-muted-foreground" />
-                    <span>{new Date(item.createdAt).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')}</span>
+                    <Clock
+                      size={14}
+                      className="text-muted-foreground"
+                    />
+                    <span>
+                      {new Date(item.createdAt).toLocaleDateString(
+                        lang === 'bn' ? 'bn-BD' : 'en-US'
+                      )}
+                    </span>
                   </div>
                   <span className="text-brandRed font-black uppercase text-[9px] tracking-tighter group-hover:translate-x-1 transition-transform">
                     {lang === 'bn' ? 'দেখুন' : 'Watch Now'} →

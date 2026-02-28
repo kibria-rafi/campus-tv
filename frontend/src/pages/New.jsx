@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Newspaper } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 export default function New({ lang }) {
   const [newsList, setNewsList] = useState([]);
@@ -23,7 +24,7 @@ export default function New({ lang }) {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5001/api/news');
+      const res = await fetch(`${API_BASE}/api/news`);
       const data = await res.json();
       setNewsList(data);
       setDisplayedNews(data.slice(0, itemsPerPage));
@@ -71,7 +72,10 @@ export default function New({ lang }) {
   // Empty State Component
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-      <Newspaper size={80} className="text-muted-foreground mb-4 opacity-50" />
+      <Newspaper
+        size={80}
+        className="text-muted-foreground mb-4 opacity-50"
+      />
       <h2 className="text-2xl font-bold text-foreground mb-2">
         {lang === 'bn' ? 'কোনো খবর পাওয়া যায়নি' : 'No News Found'}
       </h2>
@@ -150,7 +154,10 @@ export default function New({ lang }) {
 
                   {/* Date */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-auto pt-2 border-t border-border">
-                    <Calendar size={14} className="text-brandRed" />
+                    <Calendar
+                      size={14}
+                      className="text-brandRed"
+                    />
                     <span>{formatDate(news.createdAt)}</span>
                   </div>
                 </div>
@@ -173,9 +180,7 @@ export default function New({ lang }) {
                   </>
                 ) : (
                   <>
-                    <span>
-                      {lang === 'bn' ? 'আরও দেখুন' : 'Load More'}
-                    </span>
+                    <span>{lang === 'bn' ? 'আরও দেখুন' : 'Load More'}</span>
                     <span className="text-sm opacity-75">
                       ({displayedNews.length} / {newsList.length})
                     </span>
@@ -186,13 +191,14 @@ export default function New({ lang }) {
           )}
 
           {/* All Loaded Message */}
-          {displayedNews.length === newsList.length && newsList.length > itemsPerPage && (
-            <div className="text-center text-muted-foreground text-sm py-4">
-              {lang === 'bn'
-                ? '✓ সকল সংবাদ দেখানো হয়েছে'
-                : '✓ All news articles loaded'}
-            </div>
-          )}
+          {displayedNews.length === newsList.length &&
+            newsList.length > itemsPerPage && (
+              <div className="text-center text-muted-foreground text-sm py-4">
+                {lang === 'bn'
+                  ? '✓ সকল সংবাদ দেখানো হয়েছে'
+                  : '✓ All news articles loaded'}
+              </div>
+            )}
         </>
       )}
     </div>

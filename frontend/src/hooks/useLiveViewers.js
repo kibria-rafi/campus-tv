@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
-
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+import { SOCKET_URL } from '../config/api';
 
 /**
  * useLiveViewers

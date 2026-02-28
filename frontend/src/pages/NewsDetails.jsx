@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Calendar, Tag, ArrowLeft, Clock, PlayCircle, Plus, Minus, Facebook, Link as LinkIcon, Share2 } from 'lucide-react';
+import {
+  Calendar,
+  Tag,
+  ArrowLeft,
+  Clock,
+  PlayCircle,
+  Plus,
+  Minus,
+  Facebook,
+  Link as LinkIcon,
+  Share2,
+} from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 export default function NewsDetails({ lang }) {
   const { id } = useParams();
@@ -13,24 +25,24 @@ export default function NewsDetails({ lang }) {
   useEffect(() => {
     const fetchSingleNews = async () => {
       try {
-        const res = await fetch(`http://localhost:5001/api/news`);
+        const res = await fetch(`${API_BASE}/api/news`);
         const allNews = await res.json();
-        const selectedNews = allNews.find(item => item._id === id);
+        const selectedNews = allNews.find((item) => item._id === id);
 
         if (selectedNews) {
           setNews(selectedNews);
         }
-        
+
         // Fetch latest 6 news from the new endpoint
-        const latestRes = await fetch('http://localhost:5001/api/news?limit=6');
+        const latestRes = await fetch(`${API_BASE}/api/news?limit=6`);
         const latestData = await latestRes.json();
         // Exclude the current news from latest
-        const filtered = latestData.filter(item => item._id !== id);
+        const filtered = latestData.filter((item) => item._id !== id);
         setLatestNews(filtered.slice(0, 6));
-        
+
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching details:", err);
+        console.error('Error fetching details:', err);
         setLoading(false);
       }
     };
@@ -38,13 +50,20 @@ export default function NewsDetails({ lang }) {
     fetchSingleNews();
   }, [id]);
 
-  if (loading) return <div className="flex justify-center items-center h-screen font-bold text-brandRed animate-pulse">লোড হচ্ছে...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen font-bold text-brandRed animate-pulse">
+        লোড হচ্ছে...
+      </div>
+    );
 
   if (!news) {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold text-muted-foreground mb-4 uppercase italic">
-          {lang === 'bn' ? 'দুঃখিত, খবরটি পাওয়া যায়নি!' : 'Sorry, news not found!'}
+          {lang === 'bn'
+            ? 'দুঃখিত, খবরটি পাওয়া যায়নি!'
+            : 'Sorry, news not found!'}
         </h2>
         <button
           onClick={() => navigate('/')}
@@ -56,13 +75,23 @@ export default function NewsDetails({ lang }) {
     );
   }
 
-  const formattedDate = new Date(news.createdAt).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', {
-    day: 'numeric', month: 'long', year: 'numeric'
-  });
+  const formattedDate = new Date(news.createdAt).toLocaleDateString(
+    lang === 'bn' ? 'bn-BD' : 'en-US',
+    {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }
+  );
 
-  const formattedTime = new Date(news.createdAt).toLocaleTimeString(lang === 'bn' ? 'bn-BD' : 'en-US', {
-    hour: '2-digit', minute: '2-digit', hour12: true
-  });
+  const formattedTime = new Date(news.createdAt).toLocaleTimeString(
+    lang === 'bn' ? 'bn-BD' : 'en-US',
+    {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }
+  );
 
   const handleImageError = (e) => {
     e.target.src = '/logo.png';
@@ -76,16 +105,19 @@ export default function NewsDetails({ lang }) {
   };
 
   const increaseFontSize = () => {
-    setFontSize(prev => Math.min(prev + 2, 32));
+    setFontSize((prev) => Math.min(prev + 2, 32));
   };
 
   const decreaseFontSize = () => {
-    setFontSize(prev => Math.max(prev - 2, 12));
+    setFontSize((prev) => Math.max(prev - 2, 12));
   };
 
   const shareOnFacebook = () => {
     const url = window.location.href;
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      '_blank'
+    );
   };
 
   const copyLink = () => {
@@ -98,7 +130,8 @@ export default function NewsDetails({ lang }) {
       try {
         await navigator.share({
           title: news.title[lang],
-          text: news.subtitle?.[lang] || news.description[lang].substring(0, 100),
+          text:
+            news.subtitle?.[lang] || news.description[lang].substring(0, 100),
           url: window.location.href,
         });
       } catch (err) {
@@ -123,11 +156,9 @@ export default function NewsDetails({ lang }) {
 
       {/* Two-column grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Main Content - Left Column (2/3 width) */}
         <div className="lg:col-span-2">
           <div className="bg-card text-card-foreground shadow-2xl rounded-xl overflow-hidden border border-border">
-            
             <div className="p-6 md:p-10">
               {/* 1. Category Badge */}
               <div className="mb-4">
@@ -139,11 +170,17 @@ export default function NewsDetails({ lang }) {
               {/* 2. Date and Time */}
               <div className="flex flex-wrap gap-6 mb-6 text-sm text-muted-foreground font-semibold border-b border-border pb-4">
                 <div className="flex items-center gap-2">
-                  <Calendar size={16} className="text-brandRed" />
+                  <Calendar
+                    size={16}
+                    className="text-brandRed"
+                  />
                   <span>{formattedDate}</span>
                 </div>
                 <div className="flex items-center gap-2 border-l pl-6 border-border">
-                  <Clock size={16} className="text-brandRed" />
+                  <Clock
+                    size={16}
+                    className="text-brandRed"
+                  />
                   <span>{formattedTime}</span>
                 </div>
                 {news.videoUrl && (
@@ -187,7 +224,9 @@ export default function NewsDetails({ lang }) {
                   aria-label="Copy link"
                 >
                   <LinkIcon size={16} />
-                  <span className="hidden sm:inline">{lang === 'bn' ? 'লিঙ্ক' : 'Link'}</span>
+                  <span className="hidden sm:inline">
+                    {lang === 'bn' ? 'লিঙ্ক' : 'Link'}
+                  </span>
                 </button>
                 <button
                   onClick={handleShare}
@@ -195,7 +234,9 @@ export default function NewsDetails({ lang }) {
                   aria-label="Share"
                 >
                   <Share2 size={16} />
-                  <span className="hidden sm:inline">{lang === 'bn' ? 'শেয়ার' : 'Share'}</span>
+                  <span className="hidden sm:inline">
+                    {lang === 'bn' ? 'শেয়ার' : 'Share'}
+                  </span>
                 </button>
               </div>
 
@@ -214,9 +255,9 @@ export default function NewsDetails({ lang }) {
                   </div>
                 ) : (
                   <>
-                    <img 
-                      src={news.image} 
-                      alt={news.title[lang]} 
+                    <img
+                      src={news.image}
+                      alt={news.title[lang]}
                       className="w-full h-auto object-cover rounded-lg"
                       onError={handleImageError}
                     />
@@ -234,7 +275,10 @@ export default function NewsDetails({ lang }) {
                 <div>
                   {news.reporterName && (
                     <p className="text-sm font-bold text-foreground">
-                      <span className="text-muted-foreground">{lang === 'bn' ? 'প্রতিবেদক:' : 'Reporter:'}</span> {news.reporterName}
+                      <span className="text-muted-foreground">
+                        {lang === 'bn' ? 'প্রতিবেদক:' : 'Reporter:'}
+                      </span>{' '}
+                      {news.reporterName}
                     </p>
                   )}
                 </div>
@@ -249,7 +293,9 @@ export default function NewsDetails({ lang }) {
                   >
                     <Minus size={16} />
                   </button>
-                  <span className="text-sm font-bold w-8 text-center">{fontSize}</span>
+                  <span className="text-sm font-bold w-8 text-center">
+                    {fontSize}
+                  </span>
                   <button
                     onClick={increaseFontSize}
                     className="p-2 bg-muted hover:bg-muted-foreground/20 rounded-full transition"
@@ -261,7 +307,7 @@ export default function NewsDetails({ lang }) {
               </div>
 
               {/* 7. Full Description */}
-              <div 
+              <div
                 className="text-foreground leading-loose whitespace-pre-line first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
                 style={{ fontSize: `${fontSize}px` }}
               >
@@ -323,7 +369,6 @@ export default function NewsDetails({ lang }) {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

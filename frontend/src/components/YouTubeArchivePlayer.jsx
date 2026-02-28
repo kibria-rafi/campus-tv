@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiPath } from '../config/api';
 
 /**
  * YouTubeArchivePlayer
@@ -13,7 +14,7 @@ export default function YouTubeArchivePlayer() {
   // Only updates state asynchronously (inside .then / .catch) so it is
   // safe to call from both useEffect on mount and from the Retry button.
   const fetchVideos = () => {
-    fetch('http://localhost:5001/api/youtube/latest?limit=10')
+    fetch(apiPath('/api/youtube/latest?limit=10'))
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

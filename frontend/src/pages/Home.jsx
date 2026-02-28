@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Ticker from '../components/Ticker';
 import LivePlayer from '../components/LivePlayer';
 import { translations } from '../data';
+import { API_BASE } from '../config/api';
 
 export default function Home({ lang }) {
   const [newsList, setNewsList] = useState([]);
@@ -11,7 +12,7 @@ export default function Home({ lang }) {
 
   useEffect(() => {
     // ব্যাকএন্ড থেকে খবর নিয়ে আসা
-    fetch('http://localhost:5001/api/news')
+    fetch(`${API_BASE}/api/news`)
       .then((res) => res.json())
       .then((data) => {
         // Filter out video posts (non-empty videoUrl that are not live)

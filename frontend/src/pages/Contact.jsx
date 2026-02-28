@@ -8,8 +8,7 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+import { API_BASE } from '../config/api';
 const CONTACT_EMAIL = 'info@campustv.ac';
 const MAPS_LINK = 'https://maps.app.goo.gl/iPgc4mEGBg6peBat7';
 // Exact-coordinate embed — always resolves to the correct pin

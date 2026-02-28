@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../config/api';
 
 export default function Login({ lang }) {
   const [username, setUsername] = useState('');
@@ -10,10 +11,10 @@ export default function Login({ lang }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5001/api/admin/login', {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
 
@@ -21,10 +22,12 @@ export default function Login({ lang }) {
         localStorage.setItem('adminToken', data.token);
         navigate('/dashboard'); // Redirect to dashboard after successful login
       } else {
-        alert(isBn ? "ইউজারনেম বা পাসওয়ার্ড ভুল!" : "Invalid username or password!");
+        alert(
+          isBn ? 'ইউজারনেম বা পাসওয়ার্ড ভুল!' : 'Invalid username or password!'
+        );
       }
     } catch (err) {
-      alert(isBn ? "সার্ভার কানেকশন এরর!" : "Server connection error!");
+      alert(isBn ? 'সার্ভার কানেকশন এরর!' : 'Server connection error!');
     }
   };
 
@@ -33,9 +36,14 @@ export default function Login({ lang }) {
       <h2 className="text-3xl font-black text-center text-foreground mb-6 uppercase italic">
         {isBn ? 'অ্যাডমিন লগইন' : 'Admin Login'}
       </h2>
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form
+        onSubmit={handleLogin}
+        className="space-y-4"
+      >
         <div>
-          <label className="block text-sm font-bold mb-1 text-foreground">{isBn ? 'ইউজারনেম' : 'Username'}</label>
+          <label className="block text-sm font-bold mb-1 text-foreground">
+            {isBn ? 'ইউজারনেম' : 'Username'}
+          </label>
           <input
             type="text"
             className="w-full border border-border bg-background text-foreground placeholder:text-muted-foreground p-2 rounded focus:outline-none focus:border-brandRed"
@@ -46,7 +54,9 @@ export default function Login({ lang }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-bold mb-1 text-foreground">{isBn ? 'পাসওয়ার্ড' : 'Password'}</label>
+          <label className="block text-sm font-bold mb-1 text-foreground">
+            {isBn ? 'পাসওয়ার্ড' : 'Password'}
+          </label>
           <input
             type="password"
             className="w-full border border-border bg-background text-foreground placeholder:text-muted-foreground p-2 rounded focus:outline-none focus:border-brandRed"
@@ -56,7 +66,10 @@ export default function Login({ lang }) {
             required
           />
         </div>
-        <button type="submit" className="w-full bg-brandRed text-white font-bold py-2 rounded hover:bg-red-700 transition uppercase italic">
+        <button
+          type="submit"
+          className="w-full bg-brandRed text-white font-bold py-2 rounded hover:bg-red-700 transition uppercase italic"
+        >
           {isBn ? 'প্রবেশ করুন' : 'Login'}
         </button>
       </form>
