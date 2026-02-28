@@ -41,8 +41,35 @@ io.on('connection', (socket) => {
 });
 
 // ── Middleware ───────────────────────────────────────────────────────
-app.use(cors());
+// Allow common local/dev + deployed frontends. You can override with FRONTEND_URL.
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // preferred
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow non-browser clients (curl, server-to-server)
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  })
+);
 app.use(express.json());
+
+// ── Basic routes (useful for Render health checks) ───────────────────
+app.get('/', (_req, res) => {
+  res.status(200).send('Campus TV backend is running.');
+});
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({ ok: true, service: 'campus-tv-backend' });
+});
 
 // --- আপডেট করা নিউজ স্কিমা (Schema) ---
 // এখানে সব ফিল্ড একসাথে দেওয়া হয়েছে যাতে পুনরায় ডিক্লেয়ার করার প্রয়োজন না হয়
@@ -112,11 +139,11 @@ app.get('/api/news', async (req, res) => {
       $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
       isLive: { $ne: true },
     }).sort({ createdAt: -1 });
-    
+
     if (limit && limit > 0) {
       query = query.limit(limit);
     }
-    
+
     const news = await query;
     res.json(news);
   } catch (err) {
