@@ -2,8 +2,7 @@ import { useState, useCallback } from 'react';
 import VideoJsPlayer from './VideoJsPlayer';
 import YouTubeArchivePlayer from './YouTubeArchivePlayer';
 
-const HLS_SRC =
-  'https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/greentv.stream/live-orgin/greentv.stream/chunks.m3u8';
+const HLS_SRC = 'https://owrcovcrpy.gpcdn.net/bpk-tv/1709/output/index.m3u8';
 
 /**
  * LivePlayer
