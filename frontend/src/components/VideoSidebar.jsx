@@ -138,7 +138,7 @@ export default function VideoSidebar({ lang }) {
             </p>
           </div>
         ) : (
-          <ul className="overflow-y-auto flex-1 max-h-[520px] divide-y divide-border">
+          <ul className="overflow-y-auto flex-1 max-h-70 md:max-h-130 divide-y divide-border custom-scrollbar">
             {videos.map((video) => (
               <li key={video.id}>
                 <button
