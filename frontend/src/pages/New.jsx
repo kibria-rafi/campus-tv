@@ -4,10 +4,22 @@ import { Calendar, Newspaper } from 'lucide-react';
 import { API_BASE } from '../config/api';
 import { translations } from '../data';
 
+const CATEGORIES = ['Features', 'Culture', 'Education', 'Amar Campus', 'Opinion'];
+
+const CATEGORY_LABELS = {
+  'Features': { bn: 'ফিচার', en: 'Features' },
+  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
+  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
+  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+};
+
 export default function New({ lang }) {
   const [newsList, setNewsList] = useState([]);
+  const [allNews, setAllNews] = useState([]); // Store all news for filtering
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(9);
+  const [selectedCategory, setSelectedCategory] = useState(null); // null = all categories
   const t = translations[lang];
 
   useEffect(() => {
@@ -19,11 +31,29 @@ export default function New({ lang }) {
       setLoading(true);
       const res = await fetch(`${API_BASE}/api/news`);
       const data = await res.json();
+      setAllNews(data);
       setNewsList(data);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching news:', err);
       setLoading(false);
+    }
+  };
+
+  const handleCategoryClick = (category) => {
+    if (selectedCategory === category) {
+      // Deselect if clicking the same category
+      setSelectedCategory(null);
+      setNewsList(allNews);
+      setLimit(9);
+    } else {
+      // Filter by selected category
+      setSelectedCategory(category);
+      const filtered = allNews.filter((item) =>
+        (item.categories || []).includes(category)
+      );
+      setNewsList(filtered);
+      setLimit(9);
     }
   };
 
@@ -85,6 +115,42 @@ export default function New({ lang }) {
             : `${newsList.length} news articles found`}
         </p>
       </div>
+
+      {/* Category Filter Buttons */}
+      <section className="mt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-bold text-foreground mr-2">
+            {lang === 'bn' ? 'বিভাগ:' : 'Categories:'}
+          </span>
+          <button
+            onClick={() => {
+              setSelectedCategory(null);
+              setNewsList(allNews);
+              setLimit(9);
+            }}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+              selectedCategory === null
+                ? 'bg-brandRed text-white shadow-lg'
+                : 'bg-card border border-border text-foreground hover:border-brandRed'
+            }`}
+          >
+            {lang === 'bn' ? 'সব সংবাদ' : 'All News'}
+          </button>
+          {CATEGORIES.map((category) => (
+            <button
+              key={category}
+              onClick={() => handleCategoryClick(category)}
+              className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                selectedCategory === category
+                  ? 'bg-brandRed text-white shadow-lg'
+                  : 'bg-card border border-border text-foreground hover:border-brandRed'
+              }`}
+            >
+              {CATEGORY_LABELS[category][lang]}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
