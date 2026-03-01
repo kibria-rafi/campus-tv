@@ -64,6 +64,15 @@ app.use(
 );
 app.use(express.json());
 
+// ── News Categories ────────────────────────────────────────────────────────
+const ALLOWED_CATEGORIES = [
+  'Features',
+  'Culture',
+  'Education',
+  'Amar Campus',
+  'Oppinion',
+];
+
 app.get('/', (_req, res) => {
   res.status(200).send('Campus TV backend is running.');
 });
@@ -94,6 +103,15 @@ const newsSchema = new mongoose.Schema({
   },
   videoUrl: { type: String, default: '' },
   isLive: { type: Boolean, default: false },
+  categories: {
+    type: [String],
+    default: [],
+    validate: {
+      validator: (arr) =>
+        Array.isArray(arr) && arr.every((v) => ALLOWED_CATEGORIES.includes(v)),
+      message: 'Invalid category value',
+    },
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -239,9 +257,17 @@ app.get('/api/news/search', async (req, res) => {
   }
 });
 
+/** Sanitise & validate the categories field from a request body. */
+function parseCategories(raw) {
+  if (!Array.isArray(raw)) return [];
+  const valid = raw.filter((v) => ALLOWED_CATEGORIES.includes(v));
+  return [...new Set(valid)];
+}
+
 app.post('/api/news', async (req, res) => {
   try {
-    const body = { ...req.body, videoUrl: '', isLive: false };
+    const categories = parseCategories(req.body.categories);
+    const body = { ...req.body, videoUrl: '', isLive: false, categories };
     const newNews = new News(body);
     await newNews.save();
     res.json({ success: true, message: 'News published!' });
@@ -250,11 +276,91 @@ app.post('/api/news', async (req, res) => {
   }
 });
 
+// Sidebar endpoint — must be declared BEFORE /api/news/:id patterns
+app.get('/api/news/sidebar/:id', async (req, res) => {
+  try {
+    const perCategory = Math.min(parseInt(req.query.perCategory) || 6, 10);
+    const total = Math.min(parseInt(req.query.total) || 15, 30);
+
+    const current = await News.findById(req.params.id).lean();
+    if (!current) return res.status(404).json({ error: 'News not found' });
+
+    const currentCategories = current.categories || [];
+
+    // Base news filter: plain articles only
+    const baseFilter = {
+      _id: { $ne: current._id },
+      $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
+      isLive: { $ne: true },
+    };
+
+    if (currentCategories.length === 0) {
+      // No categories — return only latest
+      const latest = await News.find(baseFilter)
+        .sort({ createdAt: -1 })
+        .limit(total)
+        .lean();
+      return res.json({ categories: [], latest });
+    }
+
+    // Build category sections with deduplication
+    const usedIds = new Set();
+    const categorySections = [];
+    let totalUsed = 0;
+
+    for (const cat of currentCategories) {
+      if (totalUsed >= total) break;
+      const remaining = total - totalUsed;
+      const fetchLimit = Math.min(perCategory, remaining);
+
+      const items = await News.find({
+        ...baseFilter,
+        categories: cat,
+      })
+        .sort({ createdAt: -1 })
+        .limit(perCategory * 3) // fetch extra to account for dedup
+        .lean();
+
+      const deduped = items
+        .filter((item) => !usedIds.has(String(item._id)))
+        .slice(0, fetchLimit);
+
+      deduped.forEach((item) => usedIds.add(String(item._id)));
+      totalUsed += deduped.length;
+
+      if (deduped.length > 0) {
+        categorySections.push({ name: cat, items: deduped });
+      }
+    }
+
+    // Fill remaining slots with latest news
+    const latestNeeded = total - totalUsed;
+    let latest = [];
+    if (latestNeeded > 0) {
+      const latestRaw = await News.find({
+        ...baseFilter,
+        _id: { $nin: [...usedIds, String(current._id)] },
+      })
+        .sort({ createdAt: -1 })
+        .limit(latestNeeded)
+        .lean();
+      latest = latestRaw;
+    }
+
+    return res.json({ categories: categorySections, latest });
+  } catch (err) {
+    console.error('[Sidebar] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/news/:id', async (req, res) => {
   try {
-    const body = { ...req.body, videoUrl: '', isLive: false };
+    const categories = parseCategories(req.body.categories);
+    const body = { ...req.body, videoUrl: '', isLive: false, categories };
     const updatedNews = await News.findByIdAndUpdate(req.params.id, body, {
       new: true,
+      runValidators: true,
     });
     if (!updatedNews)
       return res.status(404).json({ message: 'News not found' });
@@ -629,6 +735,17 @@ const startServer = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB Connected Successfully!');
+
+    // One-time migration: ensure all old docs have categories: []
+    const migrated = await News.updateMany(
+      { categories: { $exists: false } },
+      { $set: { categories: [] } }
+    );
+    if (migrated.modifiedCount > 0) {
+      console.log(
+        `[Migration] Backfilled categories:[] on ${migrated.modifiedCount} news document(s).`
+      );
+    }
 
     const PORT = process.env.PORT || 5001;
     server.listen(PORT, () => {

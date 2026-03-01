@@ -15,6 +15,14 @@ import {
 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
+const CATEGORIES = [
+  'Features',
+  'Culture',
+  'Education',
+  'Amar Campus',
+  'Oppinion',
+];
+
 const emptyForm = {
   titleBn: '',
   titleEn: '',
@@ -27,6 +35,7 @@ const emptyForm = {
   reporterName: '',
   catBn: 'শিক্ষা',
   catEn: 'Education',
+  categories: [],
 };
 
 const emptyEmployee = {
@@ -206,6 +215,7 @@ export default function AdminDashboard() {
       imageCaption: news.imageCaption || '',
       reporterName: news.reporterName || '',
       category: { bn: news.catBn || 'সাধারণ', en: news.catEn || 'General' },
+      categories: news.categories || [],
     };
 
     const url = editingId
@@ -463,6 +473,44 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                {/* Categories multi-select */}
+                <div className="border-2 border-border rounded-xl p-4 space-y-2">
+                  <p className="text-xs font-black uppercase text-muted-foreground mb-3 tracking-widest">
+                    Categories (optional — select all that apply)
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    {CATEGORIES.map((cat) => {
+                      const checked = (news.categories || []).includes(cat);
+                      return (
+                        <label
+                          key={cat}
+                          className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-full border-2 text-sm font-bold transition-all select-none ${
+                            checked
+                              ? 'bg-brandRed text-white border-brandRed'
+                              : 'bg-background text-foreground border-border hover:border-brandRed'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={checked}
+                            onChange={() => {
+                              const current = news.categories || [];
+                              setNews({
+                                ...news,
+                                categories: checked
+                                  ? current.filter((c) => c !== cat)
+                                  : [...current, cat],
+                              });
+                            }}
+                          />
+                          {cat}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <textarea
                     placeholder="বিস্তারিত বর্ণনা (বাংলা)..."
@@ -542,6 +590,7 @@ export default function AdminDashboard() {
                           reporterName: item.reporterName || '',
                           catEn: item.category?.en,
                           catBn: item.category?.bn,
+                          categories: item.categories || [],
                         });
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
