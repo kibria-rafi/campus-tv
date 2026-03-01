@@ -103,6 +103,7 @@ const newsSchema = new mongoose.Schema({
     en: { type: String, required: true },
   },
   image: String,
+  secondaryImage: { type: String, default: '' },
   imageCaption: { type: String, default: '' },
   reporterName: { type: String, default: '' },
   category: {

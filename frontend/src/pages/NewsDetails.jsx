@@ -255,12 +255,12 @@ export default function NewsDetails({ lang }) {
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight">
+              <h1 className="text-xl md:text-3xl font-black text-foreground mb-6 leading-tight">
                 {news.title[lang]}
               </h1>
 
               {news.subtitle && news.subtitle[lang] && (
-                <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground mb-8 leading-relaxed italic">
+                <h2 className="text-base md:text-lg font-semibold text-muted-foreground mb-8 leading-relaxed italic">
                   {news.subtitle[lang]}
                 </h2>
               )}
@@ -363,11 +363,40 @@ export default function NewsDetails({ lang }) {
                 </div>
               </div>
 
-              <div
-                className="text-foreground leading-loose whitespace-pre-line first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
-                style={{ fontSize: `${fontSize}px` }}
-              >
-                {news.description[lang]}
+              <div className="text-foreground leading-relaxed whitespace-pre-line">
+                {news.secondaryImage ? (
+                  <>
+                    <div
+                      className="first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
+                      style={{ fontSize: `${fontSize}px` }}
+                    >
+                      {news.description[lang].substring(
+                        0,
+                        Math.floor(news.description[lang].length * 0.4)
+                      )}
+                    </div>
+                    <div className="my-6">
+                      <img
+                        src={news.secondaryImage}
+                        alt="Secondary illustration"
+                        className="w-full h-auto object-cover rounded-lg shadow-lg border border-border"
+                        onError={handleImageError}
+                      />
+                    </div>
+                    <div style={{ fontSize: `${fontSize}px` }}>
+                      {news.description[lang].substring(
+                        Math.floor(news.description[lang].length * 0.4)
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
+                    style={{ fontSize: `${fontSize}px` }}
+                  >
+                    {news.description[lang]}
+                  </div>
+                )}
               </div>
 
               {/* Category tags at bottom of article */}

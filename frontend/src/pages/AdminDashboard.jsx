@@ -38,6 +38,7 @@ const emptyForm = {
   descBn: '',
   descEn: '',
   image: '',
+  secondaryImage: '',
   imageCaption: '',
   reporterName: '',
   catBn: 'শিক্ষা',
@@ -197,6 +198,7 @@ export default function AdminDashboard() {
       subtitle: { bn: news.subtitleBn || '', en: news.subtitleEn || '' },
       description: { bn: news.descBn, en: news.descEn || news.descBn },
       image: news.image,
+      secondaryImage: news.secondaryImage || '',
       imageCaption: news.imageCaption || '',
       reporterName: news.reporterName || '',
       category: { bn: news.catBn || 'সাধারণ', en: news.catEn || 'General' },
@@ -358,6 +360,18 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 gap-4">
                   <input
                     type="text"
+                    placeholder="Secondary Image URL (Optional - displayed in article body)"
+                    className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
+                    value={news.secondaryImage}
+                    onChange={(e) =>
+                      setNews({ ...news, secondaryImage: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <input
+                    type="text"
                     placeholder="প্রতিবেদকের নাম / Reporter Name"
                     className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
                     value={news.reporterName}
@@ -507,6 +521,7 @@ export default function AdminDashboard() {
                           descBn: item.description.bn,
                           descEn: item.description.en,
                           image: item.image,
+                          secondaryImage: item.secondaryImage || '',
                           imageCaption: item.imageCaption || '',
                           reporterName: item.reporterName || '',
                           catEn: item.category?.en,

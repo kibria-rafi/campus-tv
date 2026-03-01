@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Newspaper, Info } from 'lucide-react';
+import { Home, Newspaper, Play, Info } from 'lucide-react';
 
 export default function BottomNav({ lang }) {
   const location = useLocation();
@@ -14,6 +14,11 @@ export default function BottomNav({ lang }) {
       path: '/news',
       icon: Newspaper,
       label: { bn: 'সংবাদ', en: 'News' },
+    },
+    {
+      path: '/video',
+      icon: Play,
+      label: { bn: 'ভিডিও', en: 'Video' },
     },
     {
       path: '/about',
@@ -31,7 +36,7 @@ export default function BottomNav({ lang }) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 block md:hidden bg-brandBlack border-t-2 border-brandRed shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-      <div className="grid grid-cols-3 h-16">
+      <div className="grid grid-cols-4 h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
