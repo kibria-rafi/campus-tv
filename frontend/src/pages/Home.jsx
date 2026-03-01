@@ -6,10 +6,22 @@ import VideoSidebar from '../components/VideoSidebar';
 import { translations } from '../data';
 import { API_BASE } from '../config/api';
 
+const CATEGORIES = ['Features', 'Culture', 'Education', 'Amar Campus', 'Opinion'];
+
+const CATEGORY_LABELS = {
+  'Features': { bn: 'ফিচার', en: 'Features' },
+  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
+  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
+  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+};
+
 export default function Home({ lang }) {
   const [newsList, setNewsList] = useState([]);
+  const [allNews, setAllNews] = useState([]); // Store all news for filtering
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(11);
+  const [selectedCategory, setSelectedCategory] = useState(null); // null = all categories
   const t = translations[lang];
 
   useEffect(() => {
@@ -23,11 +35,29 @@ export default function Home({ lang }) {
             item.videoUrl.trim() === '' ||
             item.isLive === true
         );
+        setAllNews(articles);
         setNewsList(articles);
         setLoading(false);
       })
       .catch((err) => console.error('Error fetching news:', err));
   }, []);
+
+  const handleCategoryClick = (category) => {
+    if (selectedCategory === category) {
+      // Deselect if clicking the same category
+      setSelectedCategory(null);
+      setNewsList(allNews);
+      setVisibleCount(11);
+    } else {
+      // Filter by selected category
+      setSelectedCategory(category);
+      const filtered = allNews.filter((item) =>
+        (item.categories || []).includes(category)
+      );
+      setNewsList(filtered);
+      setVisibleCount(11);
+    }
+  };
 
   if (loading)
     return <div className="text-center py-20 font-bold">লোড হচ্ছে...</div>;
@@ -54,8 +84,44 @@ export default function Home({ lang }) {
 
       <Ticker
         lang={lang}
-        newsList={newsList}
+        newsList={allNews}
       />
+
+      {/* Category Filter Buttons */}
+      <section className="mt-6">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-sm font-bold text-foreground mr-2">
+            {lang === 'bn' ? 'বিভাগ:' : 'Categories:'}
+          </span>
+          <button
+            onClick={() => {
+              setSelectedCategory(null);
+              setNewsList(allNews);
+              setVisibleCount(11);
+            }}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+              selectedCategory === null
+                ? 'bg-brandRed text-white shadow-lg'
+                : 'bg-card border border-border text-foreground hover:border-brandRed'
+            }`}
+          >
+            {lang === 'bn' ? 'সব' : 'All'}
+          </button>
+          {CATEGORIES.map((category) => (
+            <button
+              key={category}
+              onClick={() => handleCategoryClick(category)}
+              className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                selectedCategory === category
+                  ? 'bg-brandRed text-white shadow-lg'
+                  : 'bg-card border border-border text-foreground hover:border-brandRed'
+              }`}
+            >
+              {CATEGORY_LABELS[category][lang]}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-4">
         <h3 className="text-2xl font-black border-l-8 border-brandRed pl-3 uppercase text-foreground italic mb-6">

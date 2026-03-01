@@ -70,8 +70,16 @@ const ALLOWED_CATEGORIES = [
   'Culture',
   'Education',
   'Amar Campus',
-  'Oppinion',
+  'Opinion',
 ];
+
+const CATEGORY_MAP = {
+  'Features': { bn: 'ফিচার', en: 'Features' },
+  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
+  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
+  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+};
 
 app.get('/', (_req, res) => {
   res.status(200).send('Campus TV backend is running.');
@@ -190,11 +198,20 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/news', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
-    // Return only plain articles: no videoUrl and not isLive
-    let query = News.find({
+    const category = req.query.category; // Filter by category
+    
+    // Base filter: only plain articles (no videoUrl and not isLive)
+    const filter = {
       $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
       isLive: { $ne: true },
-    }).sort({ createdAt: -1 });
+    };
+    
+    // Add category filter if provided
+    if (category && ALLOWED_CATEGORIES.includes(category)) {
+      filter.categories = category;
+    }
+    
+    let query = News.find(filter).sort({ createdAt: -1 });
 
     if (limit && limit > 0) {
       query = query.limit(limit);

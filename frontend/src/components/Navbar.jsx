@@ -92,7 +92,7 @@ export default function Navbar({ lang, setLang }) {
             />
           </Link>
 
-          <div className="hidden lg:flex space-x-8 font-bold text-foreground text-lg italic">
+          <div className="hidden lg:flex space-x-8 text-foreground text-lg">
             <Link
               to="/"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
@@ -222,7 +222,7 @@ export default function Navbar({ lang, setLang }) {
 
         {isOpen && (
           <div className="lg:hidden bg-popover text-popover-foreground border-t border-border pb-6 shadow-xl">
-            <div className="flex flex-col mt-4 px-4 font-bold text-foreground">
+            <div className="flex flex-col mt-4 px-4 text-foreground">
               <Link
                 to="/"
                 onClick={closeMobileMenu}

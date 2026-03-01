@@ -14,6 +14,14 @@ import {
 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
+const CATEGORY_LABELS = {
+  'Features': { bn: 'ফিচার', en: 'Features' },
+  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
+  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
+  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+};
+
 /** Reusable card used in both Related and Latest sidebar sections. */
 function SidebarNewsCard({
   item,
@@ -41,9 +49,9 @@ function SidebarNewsCard({
             {chips.slice(0, 3).map((c) => (
               <span
                 key={c}
-                className="text-[9px] bg-muted text-muted-foreground border border-border px-1.5 py-0.5 rounded-full font-bold uppercase"
+                className="text-[9px] bg-brandRed/10 text-brandRed border border-brandRed/30 px-1.5 py-0.5 rounded-full font-bold uppercase"
               >
-                {c}
+                {CATEGORY_LABELS[c]?.[lang] || c}
               </span>
             ))}
           </div>
@@ -78,7 +86,7 @@ export default function NewsDetails({ lang }) {
         // Fetch sidebar data from dedicated endpoint
         try {
           const sidebarRes = await fetch(
-            `${API_BASE}/api/news/sidebar/${id}?related=10&latest=10`
+            `${API_BASE}/api/news/sidebar/${id}?related=5&latest=6`
           );
           if (sidebarRes.ok) {
             const sidebarJson = await sidebarRes.json();
@@ -88,20 +96,20 @@ export default function NewsDetails({ lang }) {
             });
           } else {
             // Fallback: just load latest
-            const latestRes = await fetch(`${API_BASE}/api/news?limit=10`);
+            const latestRes = await fetch(`${API_BASE}/api/news?limit=6`);
             const latestData = await latestRes.json();
             setSidebarData({
               related: [],
-              latest: latestData.filter((item) => item._id !== id).slice(0, 10),
+              latest: latestData.filter((item) => item._id !== id).slice(0, 6),
             });
           }
         } catch {
           // Fallback if sidebar endpoint not yet deployed
-          const latestRes = await fetch(`${API_BASE}/api/news?limit=11`);
+          const latestRes = await fetch(`${API_BASE}/api/news?limit=7`);
           const latestData = await latestRes.json();
           setSidebarData({
             related: [],
-            latest: latestData.filter((item) => item._id !== id).slice(0, 10),
+            latest: latestData.filter((item) => item._id !== id).slice(0, 6),
           });
         }
 
@@ -374,7 +382,7 @@ export default function NewsDetails({ lang }) {
                       key={cat}
                       className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border hover:border-brandRed hover:text-brandRed transition-colors"
                     >
-                      {cat}
+                      {CATEGORY_LABELS[cat]?.[lang] || cat}
                     </span>
                   ))}
                 </div>

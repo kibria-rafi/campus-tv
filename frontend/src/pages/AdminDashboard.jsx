@@ -20,8 +20,16 @@ const CATEGORIES = [
   'Culture',
   'Education',
   'Amar Campus',
-  'Oppinion',
+  'Opinion',
 ];
+
+const CATEGORY_LABELS = {
+  'Features': { bn: 'ফিচার', en: 'Features' },
+  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
+  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
+  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+};
 
 const emptyForm = {
   titleBn: '',
@@ -451,14 +459,41 @@ export default function AdminDashboard() {
                   />
                 </div>
 
+                {/* Primary Category Selector */}
+                <div className="border-2 border-border rounded-xl p-4 space-y-3">
+                  <p className="text-sm font-bold text-foreground">
+                    Primary Category (প্রধান বিভাগ)
+                  </p>
+                  <select
+                    className="w-full border-2 border-border bg-background text-foreground p-3 rounded-lg outline-none focus:border-brandRed font-semibold"
+                    value={news.catEn || 'Education'}
+                    onChange={(e) => {
+                      const selectedCat = e.target.value;
+                      const bnLabel = CATEGORY_LABELS[selectedCat]?.bn || '';
+                      setNews({
+                        ...news,
+                        catEn: selectedCat,
+                        catBn: bnLabel,
+                      });
+                    }}
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {CATEGORY_LABELS[cat]?.bn || cat} / {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Categories multi-select */}
                 <div className="border-2 border-border rounded-xl p-4 space-y-2">
                   <p className="text-sm font-bold text-foreground mb-3">
-                    Categories
+                    Tags (ট্যাগ) - Select multiple categories
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {CATEGORIES.map((cat) => {
                       const checked = (news.categories || []).includes(cat);
+                      const label = CATEGORY_LABELS[cat]?.bn || cat;
                       return (
                         <label
                           key={cat}
@@ -482,7 +517,7 @@ export default function AdminDashboard() {
                               });
                             }}
                           />
-                          {cat}
+                          {label}
                         </label>
                       );
                     })}
