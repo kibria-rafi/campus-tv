@@ -8,6 +8,7 @@ import {
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BottomNav from './components/BottomNav';
+import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import NewsDetails from './pages/NewsDetails';
 import Login from './pages/Login';
@@ -29,6 +30,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="bg-background text-foreground min-h-screen font-sans flex flex-col">
         <Navbar
           lang={lang}
