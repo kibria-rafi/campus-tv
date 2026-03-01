@@ -111,12 +111,6 @@ export default function Navbar({ lang, setLang }) {
             >
               {t.about}
             </Link>
-            <Link
-              to="/contact"
-              className="hover:text-brandRed transition underline-offset-4 hover:underline"
-            >
-              {t.contact || 'Contact'}
-            </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-3 md:gap-6">
@@ -243,13 +237,6 @@ export default function Navbar({ lang, setLang }) {
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.about}
-              </Link>
-              <Link
-                to="/contact"
-                onClick={closeMobileMenu}
-                className="py-4 border-b border-border hover:text-brandRed text-lg"
-              >
-                {t.contact || 'Contact'}
               </Link>
 
               <button

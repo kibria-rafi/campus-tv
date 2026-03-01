@@ -1,27 +1,138 @@
-import { useState, useEffect } from 'react';
-import { X, Users, Award, Target, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { Award, Target, Eye, Mail, MapPin, Send, CheckCircle, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
+const CONTACT_EMAIL = 'info@campustv.ac';
+const MAPS_LINK = 'https://maps.app.goo.gl/iPgc4mEGBg6peBat7';
+const MAP_EMBED_URL = 'https://www.google.com/maps?q=23.8768956,90.3201592&z=16&output=embed';
+
+const SUBJECTS = [
+  { value: 'general', label: { bn: 'সাধারণ', en: 'General' } },
+  { value: 'news-tip', label: { bn: 'নিউজ টিপ', en: 'News Tip' } },
+  { value: 'advertising', label: { bn: 'বিজ্ঞাপন', en: 'Advertising' } },
+  { value: 'technical', label: { bn: 'টেকনিক্যাল', en: 'Technical' } },
+];
+
+function Field({ label, error, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-semibold text-foreground">{label}</label>
+      {children}
+      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+    </div>
+  );
+}
+
+const inputCls =
+  'w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandRed placeholder:text-muted-foreground transition disabled:opacity-50';
+
+function MapCard({ lang }) {
+  const [embedFailed, setEmbedFailed] = useState(false);
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-border bg-muted aspect-video relative">
+      {embedFailed ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted p-6 text-center">
+          <MapPin size={40} className="text-brandRed" />
+          <p className="text-sm font-semibold text-foreground">
+            {lang === 'bn' ? 'ম্যাপ লোড হয়নি' : 'Map could not load'}
+          </p>
+          <a
+            href={MAPS_LINK}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 bg-brandRed text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition"
+          >
+            <ExternalLink size={14} />
+            {lang === 'bn' ? 'Google Maps-এ দেখুন' : 'View on Google Maps'}
+          </a>
+        </div>
+      ) : (
+        <iframe
+          title="Campus TV Location"
+          src={MAP_EMBED_URL}
+          className="w-full h-full border-0"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          onError={() => setEmbedFailed(true)}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function AboutUs({ lang }) {
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    subject: 'general',
+    message: '',
+    company: '', // honeypot
+  });
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState('idle');
+  const [serverError, setServerError] = useState('');
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  const change = (field) => (e) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const fetchEmployees = async () => {
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim())
+      e.name = lang === 'bn' ? 'নাম প্রয়োজন' : 'Name is required.';
+    if (!form.email.trim())
+      e.email = lang === 'bn' ? 'ইমেইল প্রয়োজন' : 'Email is required.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      e.email = lang === 'bn' ? 'সঠিক ইমেইল দিন' : 'Enter a valid email.';
+    if (!form.message.trim())
+      e.message = lang === 'bn' ? 'বার্তা প্রয়োজন' : 'Message is required.';
+    else if (form.message.length > 2000)
+      e.message =
+        lang === 'bn'
+          ? 'বার্তা ২০০০ অক্ষরের কম হতে হবে'
+          : 'Message must be under 2000 characters.';
+    return e;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    setStatus('loading');
+    setServerError('');
+
     try {
-      const res = await fetch(`${API_BASE}/api/employees`);
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
       const data = await res.json();
-      setEmployees(data);
+      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+      setStatus('success');
+      setForm({
+        name: '',
+        email: '',
+        subject: 'general',
+        message: '',
+        company: '',
+      });
     } catch (err) {
-      console.error('Error fetching employees:', err);
-    } finally {
-      setLoading(false);
+      setStatus('error');
+      setServerError(
+        err.message ||
+          (lang === 'bn'
+            ? 'বার্তা পাঠানো যায়নি। আবার চেষ্টা করুন।'
+            : 'Could not send message. Please try again.')
+      );
     }
   };
+
+  const isLoading = status === 'loading';
 
   const aboutContent = {
     bn: {
@@ -31,9 +142,6 @@ export default function AboutUs({ lang }) {
 আমাদের লক্ষ্য হলো শিক্ষার্থীদের মধ্যে একটি শক্তিশালী যোগাযোগ মাধ্যম তৈরি করা যা তাদের ক্যাম্পাস জীবন, শিক্ষাগত সুযোগ, এবং সামাজিক দায়বদ্ধতা সম্পর্কে সচেতন করে তুলবে।
 
 আমরা বিশ্বাস করি যে সংবাদ এবং তথ্য প্রচারের মাধ্যমে আমরা একটি শিক্ষিত এবং সচেতন প্রজন্ম গড়তে পারি যারা দেশ এবং সমাজের জন্য ইতিবাচক পরিবর্তন আনতে সক্ষম।`,
-      teamTitle: 'আমাদের টিম',
-      viewDetails: 'বিস্তারিত দেখুন',
-      close: 'বন্ধ করুন',
       mission: 'আমাদের লক্ষ্য',
       missionText:
         'শিক্ষার্থীদের সঠিক এবং নির্ভরযোগ্য তথ্য প্রদানের মাধ্যমে একটি সচেতন প্রজন্ম গড়ে তোলা।',
@@ -51,9 +159,6 @@ export default function AboutUs({ lang }) {
 Our goal is to create a strong communication medium among students that will make them aware of their campus life, educational opportunities, and social responsibilities.
 
 We believe that through news and information dissemination, we can build an educated and conscious generation capable of bringing positive changes to the country and society.`,
-      teamTitle: 'Our Team',
-      viewDetails: 'View Details',
-      close: 'Close',
       mission: 'Our Mission',
       missionText:
         'To build a conscious generation by providing accurate and reliable information to students.',
@@ -70,6 +175,7 @@ We believe that through news and information dissemination, we can build an educ
 
   return (
     <div className="min-h-screen">
+      {/* About Header */}
       <div className="bg-gradient-to-br from-brandRed via-red-700 to-brandBlack text-white py-16 mb-12 rounded-2xl shadow-2xl">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-black text-center mb-6 uppercase italic tracking-tight">
@@ -83,6 +189,7 @@ We believe that through news and information dissemination, we can build an educ
         </div>
       </div>
 
+      {/* Mission, Vision, Values */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all hover:border-brandRed">
           <div className="flex items-center gap-3 mb-4">
@@ -130,138 +237,221 @@ We believe that through news and information dissemination, we can build an educ
         </div>
       </div>
 
-      <div className="mb-12">
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <Users
-            className="text-brandRed"
-            size={36}
-          />
+      {/* Contact Section */}
+      <div className="mb-16">
+        <div className="mb-10 border-l-8 border-brandRed pl-4">
           <h2 className="text-3xl md:text-4xl font-black text-foreground uppercase italic">
-            {content.teamTitle}
+            {lang === 'bn' ? 'যোগাযোগ করুন' : 'Contact Us'}
           </h2>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">
+            {lang === 'bn'
+              ? 'আপনার মতামত, প্রশ্ন বা টিপস পাঠান।'
+              : 'Send us your feedback, questions, or tips.'}
+          </p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-brandRed border-t-transparent"></div>
-            <p className="mt-4 text-muted-foreground">
-              Loading team members...
-            </p>
-          </div>
-        ) : employees.length === 0 ? (
-          <div className="text-center py-20 bg-card rounded-2xl border border-border">
-            <Users
-              className="mx-auto mb-4 text-muted-foreground"
-              size={48}
+        {status === 'success' && (
+          <div className="mb-6 flex items-start gap-3 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-800 text-green-800 dark:text-green-300 rounded-xl px-4 py-3 text-sm font-semibold">
+            <CheckCircle
+              size={18}
+              className="mt-0.5 shrink-0"
             />
-            <p className="text-xl text-muted-foreground">
-              {lang === 'bn' ? 'কোনো টিম সদস্য নেই' : 'No team members yet'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {employees.map((employee) => (
-              <div
-                key={employee._id}
-                className="bg-card border border-border rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:border-brandRed group"
-              >
-                <div className="aspect-square overflow-hidden bg-muted">
-                  <img
-                    src={
-                      employee.imageURL ||
-                      'https://via.placeholder.com/400x400?text=No+Image'
-                    }
-                    alt={employee.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src =
-                        'https://via.placeholder.com/400x400?text=No+Image';
-                    }}
-                  />
-                </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-black text-foreground uppercase mb-1 truncate">
-                    {employee.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground font-bold mb-3 truncate">
-                    {employee.designation}
-                  </p>
-                  <button
-                    onClick={() => setSelectedEmployee(employee)}
-                    className="w-full py-2 bg-brandRed text-white font-bold rounded-lg hover:bg-red-700 transition-all uppercase text-sm"
-                  >
-                    {content.viewDetails}
-                  </button>
-                </div>
-              </div>
-            ))}
+            <span>
+              {lang === 'bn'
+                ? 'বার্তা পাঠানো হয়েছে! আমরা শীঘ্রই যোগাযোগ করব।'
+                : "Message sent! We'll get back to you within 24–48 hours."}
+            </span>
           </div>
         )}
-      </div>
 
-      {/* Employee Details Modal */}
-      {selectedEmployee && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-card border-2 border-brandRed rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-brandRed text-white p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-black uppercase italic">
-                {selectedEmployee.name}
-              </h2>
-              <button
-                onClick={() => setSelectedEmployee(null)}
-                className="p-2 hover:bg-white/20 rounded-full transition-all"
+        {status === 'error' && serverError && (
+          <div className="mb-6 flex items-start gap-3 bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm font-semibold">
+            <AlertCircle
+              size={18}
+              className="mt-0.5 shrink-0"
+            />
+            <span>{serverError}</span>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          {/* Contact Form */}
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+            <h3 className="text-lg font-black text-foreground mb-5 uppercase italic tracking-tight">
+              {lang === 'bn' ? 'বার্তা পাঠান' : 'Send a Message'}
+            </h3>
+
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="flex flex-col gap-4"
+            >
+              {/* Honeypot — visually hidden, real users never see or fill this */}
+              <input
+                type="text"
+                name="company"
+                value={form.company}
+                onChange={change('company')}
+                tabIndex={-1}
+                aria-hidden="true"
+                autoComplete="off"
+                style={{ display: 'none' }}
+              />
+
+              <Field
+                label={lang === 'bn' ? 'নাম *' : 'Name *'}
+                error={errors.name}
               >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col items-center mb-6">
-                <img
-                  src={
-                    selectedEmployee.imageURL ||
-                    'https://via.placeholder.com/400x400?text=No+Image'
-                  }
-                  alt={selectedEmployee.name}
-                  className="w-48 h-48 object-cover rounded-full border-4 border-brandRed shadow-xl mb-4"
-                  onError={(e) => {
-                    e.target.src =
-                      'https://via.placeholder.com/400x400?text=No+Image';
-                  }}
+                <input
+                  type="text"
+                  className={inputCls}
+                  placeholder={lang === 'bn' ? 'আপনার নাম' : 'Your name'}
+                  value={form.name}
+                  onChange={change('name')}
+                  disabled={isLoading}
+                  required
                 />
-                <p className="text-xl font-bold text-brandRed">
-                  {selectedEmployee.designation}
-                </p>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-black text-foreground mb-2 uppercase">
-                    {lang === 'bn' ? 'জীবনী (বাংলা)' : 'Bio (Bangla)'}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                    {selectedEmployee.bio.bn}
-                  </p>
-                </div>
-                <div className="border-t border-border pt-4">
-                  <h3 className="text-lg font-black text-foreground mb-2 uppercase">
-                    {lang === 'bn' ? 'জীবনী (ইংরেজি)' : 'Bio (English)'}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                    {selectedEmployee.bio.en}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6 border-t border-border">
-              <button
-                onClick={() => setSelectedEmployee(null)}
-                className="w-full py-3 bg-brandBlack text-white font-bold rounded-lg hover:bg-brandRed transition-all uppercase"
+              </Field>
+
+              <Field
+                label={lang === 'bn' ? 'ইমেইল *' : 'Email *'}
+                error={errors.email}
               >
-                {content.close}
+                <input
+                  type="email"
+                  className={inputCls}
+                  placeholder={
+                    lang === 'bn' ? 'আপনার ইমেইল' : 'you@example.com'
+                  }
+                  value={form.email}
+                  onChange={change('email')}
+                  disabled={isLoading}
+                  required
+                />
+              </Field>
+
+              <Field label={lang === 'bn' ? 'বিষয়' : 'Subject'}>
+                <select
+                  className={inputCls}
+                  value={form.subject}
+                  onChange={change('subject')}
+                  disabled={isLoading}
+                >
+                  {SUBJECTS.map((s) => (
+                    <option
+                      key={s.value}
+                      value={s.value}
+                    >
+                      {s.label[lang]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field
+                label={lang === 'bn' ? 'বার্তা *' : 'Message *'}
+                error={errors.message}
+              >
+                <textarea
+                  rows={5}
+                  className={`${inputCls} resize-none`}
+                  placeholder={
+                    lang === 'bn'
+                      ? 'আপনার বার্তা লিখুন...'
+                      : 'Write your message here...'
+                  }
+                  value={form.message}
+                  onChange={change('message')}
+                  disabled={isLoading}
+                  maxLength={2000}
+                  required
+                />
+                <p className="text-right text-[11px] text-muted-foreground">
+                  {form.message.length}/2000
+                </p>
+              </Field>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 bg-brandRed text-white px-5 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2
+                      size={16}
+                      className="animate-spin"
+                    />
+                    {lang === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending…'}
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    {lang === 'bn' ? 'বার্তা পাঠান' : 'Send Message'}
+                  </>
+                )}
               </button>
+            </form>
+          </div>
+
+          {/* Contact Info & Map */}
+          <div className="flex flex-col gap-6">
+            {/* Contact info card */}
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col gap-5">
+              <h3 className="text-lg font-black text-foreground uppercase italic tracking-tight">
+                {lang === 'bn' ? 'যোগাযোগের তথ্য' : 'Contact Info'}
+              </h3>
+
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 p-2 rounded-lg bg-brandRed/10 text-brandRed">
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
+                    {lang === 'bn' ? 'ইমেইল' : 'Email'}
+                  </p>
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="text-sm font-semibold text-foreground hover:text-brandRed transition break-all"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {lang === 'bn'
+                      ? '২৪–৪৮ ঘন্টার মধ্যে উত্তর দেওয়া হয়'
+                      : 'We respond within 24–48 hours'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 p-2 rounded-lg bg-brandRed/10 text-brandRed">
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
+                    {lang === 'bn' ? 'অবস্থান' : 'Location'}
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Campus TV Official
+                  </p>
+                  <a
+                    href={MAPS_LINK}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold bg-card border border-border hover:border-brandRed hover:text-brandRed text-foreground px-3 py-1.5 rounded-lg transition"
+                  >
+                    <ExternalLink size={12} />
+                    {lang === 'bn' ? 'দিকনির্দেশনা পান' : 'Get Directions'}
+                  </a>
+                </div>
+              </div>
             </div>
+
+            <MapCard lang={lang} />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
