@@ -1,37 +1,68 @@
 import { useState, useCallback } from 'react';
 import VideoJsPlayer from './VideoJsPlayer';
 import YouTubeArchivePlayer from './YouTubeArchivePlayer';
-
-const HLS_SRC = 'https://owrcovcrpy.gpcdn.net/bpk-tv/1709/output/index.m3u8';
+import { useStreamSettings } from '../hooks/useStreamSettings';
 
 /**
  * LivePlayer
  *
- * Orchestrates live HLS playback with automatic fallback to YouTube archive.
+ * Orchestrates live HLS playback with automatic fallback:
+ *   primary M3U8 → backup M3U8 (if provided) → YouTube archive.
+ *
+ * Stream URLs are loaded from the admin-controlled /api/stream-settings
+ * endpoint via the shared useStreamSettings hook (cached, one fetch per page load).
  *
  * Props:
- *   hlsSrc   {string}  – optional override for the HLS stream URL
  *   title    {string}  – display title (default "Live Stream")
  *   variant  {string}  – 'compact' (homepage) | 'full' (live page)
  */
 export default function LivePlayer({
-  hlsSrc = HLS_SRC,
   title = 'Live Stream',
   variant = 'compact',
 }) {
+  const { settings } = useStreamSettings();
+
+  // Use admin-configured URLs; fall back to empty string so VideoJsPlayer
+  // triggers its error/timeout handler and falls through to archive.
+  const effectivePrimary = settings?.primaryM3u8 || '';
+  const backupSrc = settings?.backupM3u8 || null;
+
   const outerWidth = variant === 'full' ? 'max-w-6xl' : 'max-w-3xl';
   const [mode, setMode] = useState('live');
-  // Key forces full remount of VideoJsPlayer when retrying live
+  // 'primary' | 'backup' – which stream we are currently trying within live mode
+  const [streamPhase, setStreamPhase] = useState('primary');
+  // Key forces full remount of VideoJsPlayer when switching source or retrying
   const [liveKey, setLiveKey] = useState(0);
   const [fallbackReason, setFallbackReason] = useState('');
 
-  const handleFallback = useCallback((reason) => {
-    setFallbackReason(reason);
-    setMode('archive');
-  }, []);
+  const activeSrc =
+    mode === 'live' && streamPhase === 'backup' && backupSrc
+      ? backupSrc
+      : effectivePrimary;
+
+  const handleFallback = useCallback(
+    (reason) => {
+      // If we are on primary and a backup is available, try the backup first
+      if (streamPhase === 'primary' && backupSrc) {
+        setStreamPhase('backup');
+        setLiveKey((k) => k + 1);
+        setFallbackReason('');
+        return;
+      }
+      // No backup or backup also failed → show archive
+      setFallbackReason(
+        streamPhase === 'backup'
+          ? `primary & backup streams unavailable (${reason})`
+          : reason
+      );
+      setMode('archive');
+    },
+    [streamPhase, backupSrc]
+  );
 
   const handleTryLiveAgain = useCallback(() => {
     setFallbackReason('');
+    setStreamPhase('primary');
     setLiveKey((k) => k + 1);
     setMode('live');
   }, []);
@@ -65,6 +96,12 @@ export default function LivePlayer({
           </span>
         )}
 
+        {mode === 'live' && streamPhase === 'backup' && (
+          <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-semibold border border-orange-500/40">
+            Backup Stream
+          </span>
+        )}
+
         {mode === 'archive' && (
           <button
             onClick={handleTryLiveAgain}
@@ -91,7 +128,7 @@ export default function LivePlayer({
         {mode === 'live' ? (
           <VideoJsPlayer
             key={liveKey}
-            src={hlsSrc}
+            src={activeSrc}
             title={title}
             onFallback={handleFallback}
           />

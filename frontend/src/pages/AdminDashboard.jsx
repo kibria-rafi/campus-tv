@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LogOut,
@@ -8,6 +8,10 @@ import {
   XCircle,
   FileText,
   Users,
+  Radio,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
@@ -37,10 +41,21 @@ export default function AdminDashboard() {
   const [news, setNews] = useState(emptyForm);
   const [allNews, setAllNews] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [activeTab, setActiveTab] = useState('news'); // 'news' or 'employees'
+  const [activeTab, setActiveTab] = useState('news'); // 'news' | 'employees' | 'stream'
   const [employee, setEmployee] = useState(emptyEmployee);
   const [allEmployees, setAllEmployees] = useState([]);
   const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+
+  // Stream Settings tab state
+  const [streamForm, setStreamForm] = useState({
+    primaryM3u8: '',
+    backupM3u8: '',
+  });
+  const [streamSaving, setStreamSaving] = useState(false);
+  const [streamMsg, setStreamMsg] = useState(null); // { type: 'success'|'error', text }
+  const [testResult, setTestResult] = useState({ primary: null, backup: null });
+  const [testing, setTesting] = useState({ primary: false, backup: false });
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,6 +65,24 @@ export default function AdminDashboard() {
     fetchEmployees();
   }, [navigate]);
 
+  const fetchStreamSettings = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE}/api/admin/stream-settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStreamForm({
+          primaryM3u8: data.primaryM3u8 || '',
+          backupM3u8: data.backupM3u8 || '',
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load stream settings:', err);
+    }
+  }, []);
+
   const fetchNews = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/news`);
@@ -58,6 +91,93 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error('Fetch error:', err);
     }
+  };
+
+  const handleSaveStreamSettings = async (e) => {
+    e.preventDefault();
+    setStreamSaving(true);
+    setStreamMsg(null);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE}/api/admin/stream-settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          primaryM3u8: streamForm.primaryM3u8.trim(),
+          backupM3u8: streamForm.backupM3u8.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStreamMsg({
+          type: 'success',
+          text: 'Stream settings saved successfully!',
+        });
+        setStreamForm({
+          primaryM3u8: data.primaryM3u8 || '',
+          backupM3u8: data.backupM3u8 || '',
+        });
+        setTestResult({ primary: null, backup: null });
+      } else {
+        setStreamMsg({
+          type: 'error',
+          text: data.error || 'Failed to save settings.',
+        });
+      }
+    } catch {
+      setStreamMsg({
+        type: 'error',
+        text: 'Network error — could not reach the server.',
+      });
+    } finally {
+      setStreamSaving(false);
+    }
+  };
+
+  const handleTestUrl = async (field) => {
+    const url =
+      field === 'primary' ? streamForm.primaryM3u8 : streamForm.backupM3u8;
+    if (!url.trim()) return;
+    setTesting((t) => ({ ...t, [field]: true }));
+    setTestResult((r) => ({ ...r, [field]: null }));
+    try {
+      // Use no-cors so the fetch doesn't throw on CORS-blocked responses
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url.trim(), {
+        method: 'HEAD',
+        signal: controller.signal,
+        mode: 'no-cors',
+      });
+      clearTimeout(tid);
+      // no-cors always gives opaque response (status 0) even on success
+      setTestResult((r) => ({
+        ...r,
+        [field]: {
+          ok: true,
+          note:
+            res.status === 0
+              ? 'Request sent (opaque response — likely reachable)'
+              : `HTTP ${res.status}`,
+        },
+      }));
+    } catch (err) {
+      const msg =
+        err.name === 'AbortError'
+          ? 'Timed out (10 s)'
+          : err.message || 'Unreachable';
+      setTestResult((r) => ({ ...r, [field]: { ok: false, note: msg } }));
+    } finally {
+      setTesting((t) => ({ ...t, [field]: false }));
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'stream') fetchStreamSettings();
   };
 
   const fetchEmployees = async () => {
@@ -190,7 +310,7 @@ export default function AdminDashboard() {
 
       <div className="flex gap-4 border-b border-border pb-2 overflow-x-auto">
         <button
-          onClick={() => setActiveTab('news')}
+          onClick={() => handleTabChange('news')}
           className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${
             activeTab === 'news'
               ? 'bg-brandRed text-white shadow-lg'
@@ -200,7 +320,7 @@ export default function AdminDashboard() {
           <FileText size={18} /> News Post
         </button>
         <button
-          onClick={() => setActiveTab('employees')}
+          onClick={() => handleTabChange('employees')}
           className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${
             activeTab === 'employees'
               ? 'bg-brandRed text-white shadow-lg'
@@ -208,6 +328,16 @@ export default function AdminDashboard() {
           }`}
         >
           <Users size={18} /> Manage Employees
+        </button>
+        <button
+          onClick={() => handleTabChange('stream')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${
+            activeTab === 'stream'
+              ? 'bg-brandRed text-white shadow-lg'
+              : 'bg-muted text-muted-foreground hover:bg-card'
+          }`}
+        >
+          <Radio size={18} /> Stream Control
         </button>
       </div>
 
@@ -585,6 +715,168 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'stream' && (
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-card shadow-xl rounded-2xl border border-border overflow-hidden">
+            <div className="p-4 text-white flex items-center gap-2 font-bold uppercase italic bg-brandBlack">
+              <Radio size={20} />
+              <span>Stream Control</span>
+            </div>
+
+            <form
+              onSubmit={handleSaveStreamSettings}
+              className="p-8 space-y-6"
+            >
+              {/* Primary M3U8 */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold uppercase text-foreground tracking-wide">
+                  Primary M3U8 URL <span className="text-brandRed">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://example.com/stream.m3u8"
+                    className="flex-1 border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed font-mono text-sm"
+                    value={streamForm.primaryM3u8}
+                    onChange={(e) => {
+                      setStreamForm((f) => ({
+                        ...f,
+                        primaryM3u8: e.target.value,
+                      }));
+                      setTestResult((r) => ({ ...r, primary: null }));
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    disabled={!streamForm.primaryM3u8.trim() || testing.primary}
+                    onClick={() => handleTestUrl('primary')}
+                    className="px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-card border border-border font-bold text-xs uppercase transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    {testing.primary ? (
+                      <Loader2
+                        size={13}
+                        className="animate-spin"
+                      />
+                    ) : null}
+                    Test
+                  </button>
+                </div>
+                {testResult.primary && (
+                  <p
+                    className={`text-xs flex items-center gap-1.5 font-semibold ${testResult.primary.ok ? 'text-green-500' : 'text-red-400'}`}
+                  >
+                    {testResult.primary.ok ? (
+                      <CheckCircle2 size={13} />
+                    ) : (
+                      <AlertCircle size={13} />
+                    )}
+                    {testResult.primary.note}
+                  </p>
+                )}
+              </div>
+
+              {/* Backup M3U8 */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold uppercase text-foreground tracking-wide">
+                  Backup M3U8 URL{' '}
+                  <span className="text-muted-foreground text-xs normal-case">
+                    (optional)
+                  </span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://example.com/backup.m3u8"
+                    className="flex-1 border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed font-mono text-sm"
+                    value={streamForm.backupM3u8}
+                    onChange={(e) => {
+                      setStreamForm((f) => ({
+                        ...f,
+                        backupM3u8: e.target.value,
+                      }));
+                      setTestResult((r) => ({ ...r, backup: null }));
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!streamForm.backupM3u8.trim() || testing.backup}
+                    onClick={() => handleTestUrl('backup')}
+                    className="px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-card border border-border font-bold text-xs uppercase transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    {testing.backup ? (
+                      <Loader2
+                        size={13}
+                        className="animate-spin"
+                      />
+                    ) : null}
+                    Test
+                  </button>
+                </div>
+                {testResult.backup && (
+                  <p
+                    className={`text-xs flex items-center gap-1.5 font-semibold ${testResult.backup.ok ? 'text-green-500' : 'text-red-400'}`}
+                  >
+                    {testResult.backup.ok ? (
+                      <CheckCircle2 size={13} />
+                    ) : (
+                      <AlertCircle size={13} />
+                    )}
+                    {testResult.backup.note}
+                  </p>
+                )}
+              </div>
+
+              {/* Playback priority note */}
+              <div className="rounded-lg bg-muted border border-border p-4 text-xs text-muted-foreground space-y-1">
+                <p className="font-black uppercase text-foreground text-[11px] mb-2">
+                  Playback Priority
+                </p>
+                <p>1 · Primary M3U8 — attempted first</p>
+                <p>
+                  2 · Backup M3U8 — used if primary fails (requires backup URL)
+                </p>
+                <p>3 · Video Archive — shown if both streams fail</p>
+              </div>
+
+              {/* Status message */}
+              {streamMsg && (
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg text-sm font-semibold ${
+                    streamMsg.type === 'success'
+                      ? 'bg-green-500/10 text-green-500 border border-green-500/30'
+                      : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                  }`}
+                >
+                  {streamMsg.type === 'success' ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <AlertCircle size={16} />
+                  )}
+                  {streamMsg.text}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={streamSaving}
+                className="w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed disabled:opacity-60"
+              >
+                {streamSaving ? (
+                  <Loader2
+                    size={18}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Radio size={18} />
+                )}
+                {streamSaving ? 'Saving…' : 'Save Stream Settings'}
+              </button>
+            </form>
           </div>
         </div>
       )}

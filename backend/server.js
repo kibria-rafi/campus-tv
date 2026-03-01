@@ -113,6 +113,48 @@ const employeeSchema = new mongoose.Schema({
 const Employee =
   mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
 
+// ── Stream Settings ────────────────────────────────────────────────────────
+// Single-document collection that stores the live stream URLs.
+const streamSettingsSchema = new mongoose.Schema({
+  primaryM3u8: { type: String, required: true },
+  backupM3u8: { type: String, default: '' },
+  updatedAt: { type: Date, default: Date.now },
+  updatedBy: { type: String, default: '' },
+});
+
+const StreamSettings =
+  mongoose.models.StreamSettings ||
+  mongoose.model('StreamSettings', streamSettingsSchema);
+
+// ── Auth middleware ────────────────────────────────────────────────────────
+function requireAdmin(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const token = auth.slice(7);
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (payload.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    req.admin = payload;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
+
+function isValidStreamUrl(url) {
+  if (!url || typeof url !== 'string' || !url.trim()) return false;
+  try {
+    const u = new URL(url.trim());
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (
@@ -498,6 +540,89 @@ app.post('/api/contact', (req, res) => {
   });
 
   return res.json({ success: true, message: 'Message received.' });
+});
+
+// ── Stream Settings routes ─────────────────────────────────────────────────
+
+// Public: frontend live player reads this to get current stream URLs.
+app.get('/api/stream-settings', async (_req, res) => {
+  try {
+    const settings = await StreamSettings.findOne();
+    if (!settings) {
+      return res.json({ primaryM3u8: '', backupM3u8: null });
+    }
+    return res.json({
+      primaryM3u8: settings.primaryM3u8,
+      backupM3u8: settings.backupM3u8 || null,
+    });
+  } catch (err) {
+    console.error('[StreamSettings] GET public error:', err);
+    return res.status(500).json({ error: 'Failed to fetch stream settings' });
+  }
+});
+
+// Admin: read current settings
+app.get('/api/admin/stream-settings', requireAdmin, async (_req, res) => {
+  try {
+    const settings = await StreamSettings.findOne();
+    if (!settings) {
+      return res.json({ primaryM3u8: '', backupM3u8: null });
+    }
+    return res.json({
+      primaryM3u8: settings.primaryM3u8,
+      backupM3u8: settings.backupM3u8 || null,
+    });
+  } catch (err) {
+    console.error('[StreamSettings] Admin GET error:', err);
+    return res.status(500).json({ error: 'Failed to fetch stream settings' });
+  }
+});
+
+// Admin: create or update settings (upsert single document)
+app.put('/api/admin/stream-settings', requireAdmin, async (req, res) => {
+  try {
+    const { primaryM3u8, backupM3u8 } = req.body;
+
+    if (!isValidStreamUrl(primaryM3u8)) {
+      return res.status(400).json({
+        error:
+          'primaryM3u8 must be a valid http/https URL (e.g. https://example.com/stream.m3u8)',
+      });
+    }
+
+    const backup =
+      backupM3u8 && backupM3u8.trim()
+        ? isValidStreamUrl(backupM3u8)
+          ? backupM3u8.trim()
+          : (() => {
+              throw new Error(
+                'backupM3u8 must be a valid http/https URL if provided'
+              );
+            })()
+        : '';
+
+    const updatedBy = req.admin?.username || req.admin?.sub || '';
+    const settings = await StreamSettings.findOneAndUpdate(
+      {},
+      {
+        primaryM3u8: primaryM3u8.trim(),
+        backupM3u8: backup,
+        updatedAt: new Date(),
+        updatedBy,
+      },
+      { upsert: true, new: true }
+    );
+
+    return res.json({
+      primaryM3u8: settings.primaryM3u8,
+      backupM3u8: settings.backupM3u8 || null,
+    });
+  } catch (err) {
+    console.error('[StreamSettings] Admin PUT error:', err);
+    return res
+      .status(err.message.includes('valid') ? 400 : 500)
+      .json({ error: err.message || 'Failed to update stream settings' });
+  }
 });
 
 const startServer = async () => {
