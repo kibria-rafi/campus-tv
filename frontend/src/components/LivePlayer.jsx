@@ -27,7 +27,9 @@ export default function LivePlayer({
   const effectivePrimary = settings?.primaryM3u8 || '';
   const backupSrc = settings?.backupM3u8 || null;
 
-  const outerWidth = variant === 'full' ? 'max-w-6xl' : 'max-w-3xl';
+  // 'compact' → centred narrow card  |  'full' → centred wide card  |  'hero' → fills container (no max-w)
+  const outerWidth =
+    variant === 'full' ? 'max-w-6xl' : variant === 'hero' ? '' : 'max-w-3xl';
   const [mode, setMode] = useState('live');
   // 'primary' | 'backup' – which stream we are currently trying within live mode
   const [streamPhase, setStreamPhase] = useState('primary');
