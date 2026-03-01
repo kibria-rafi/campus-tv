@@ -439,7 +439,7 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <input
                     type="text"
                     placeholder="প্রতিবেদকের নাম / Reporter Name"
@@ -449,34 +449,12 @@ export default function AdminDashboard() {
                       setNews({ ...news, reporterName: e.target.value })
                     }
                   />
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="ক্যাটাগরি"
-                      className="w-1/2 border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
-                      value={news.catBn}
-                      onChange={(e) =>
-                        setNews({ ...news, catBn: e.target.value })
-                      }
-                      required
-                    />
-                    <input
-                      type="text"
-                      placeholder="Category (EN)"
-                      className="w-1/2 border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
-                      value={news.catEn}
-                      onChange={(e) =>
-                        setNews({ ...news, catEn: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
                 </div>
 
                 {/* Categories multi-select */}
                 <div className="border-2 border-border rounded-xl p-4 space-y-2">
-                  <p className="text-xs font-black uppercase text-muted-foreground mb-3 tracking-widest">
-                    Categories (optional — select all that apply)
+                  <p className="text-sm font-bold text-foreground mb-3">
+                    Categories
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {CATEGORIES.map((cat) => {

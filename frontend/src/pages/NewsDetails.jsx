@@ -14,12 +14,54 @@ import {
 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
+/** Reusable card used in both Related and Latest sidebar sections. */
+function SidebarNewsCard({
+  item,
+  lang,
+  getYouTubeThumbnail,
+  handleImageError,
+}) {
+  const chips = [...new Set(item.categories || [])];
+  return (
+    <Link
+      to={`/news/${item._id}`}
+      className="flex gap-3 p-4 hover:bg-muted transition-colors duration-200 group"
+    >
+      <div className="shrink-0">
+        <img
+          src={item.image || getYouTubeThumbnail(item.videoUrl)}
+          alt={item.title[lang]}
+          className="w-20 h-20 object-cover rounded-lg group-hover:brightness-90 transition"
+          onError={handleImageError}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        {chips.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-1">
+            {chips.slice(0, 3).map((c) => (
+              <span
+                key={c}
+                className="text-[9px] bg-muted text-muted-foreground border border-border px-1.5 py-0.5 rounded-full font-bold uppercase"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+        )}
+        <h3 className="text-sm font-bold text-foreground leading-snug line-clamp-3 group-hover:text-brandRed transition-colors">
+          {item.title[lang]}
+        </h3>
+      </div>
+    </Link>
+  );
+}
+
 export default function NewsDetails({ lang }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [news, setNews] = useState(null);
   const [sidebarData, setSidebarData] = useState({
-    categories: [],
+    related: [],
     latest: [],
   });
   const [loading, setLoading] = useState(true);
@@ -36,30 +78,30 @@ export default function NewsDetails({ lang }) {
         // Fetch sidebar data from dedicated endpoint
         try {
           const sidebarRes = await fetch(
-            `${API_BASE}/api/news/sidebar/${id}?perCategory=6&total=15`
+            `${API_BASE}/api/news/sidebar/${id}?related=10&latest=10`
           );
           if (sidebarRes.ok) {
             const sidebarJson = await sidebarRes.json();
             setSidebarData({
-              categories: sidebarJson.categories || [],
+              related: sidebarJson.related || [],
               latest: sidebarJson.latest || [],
             });
           } else {
             // Fallback: just load latest
-            const latestRes = await fetch(`${API_BASE}/api/news?limit=6`);
+            const latestRes = await fetch(`${API_BASE}/api/news?limit=10`);
             const latestData = await latestRes.json();
             setSidebarData({
-              categories: [],
-              latest: latestData.filter((item) => item._id !== id).slice(0, 6),
+              related: [],
+              latest: latestData.filter((item) => item._id !== id).slice(0, 10),
             });
           }
         } catch {
           // Fallback if sidebar endpoint not yet deployed
-          const latestRes = await fetch(`${API_BASE}/api/news?limit=7`);
+          const latestRes = await fetch(`${API_BASE}/api/news?limit=11`);
           const latestData = await latestRes.json();
           setSidebarData({
-            categories: [],
-            latest: latestData.filter((item) => item._id !== id).slice(0, 6),
+            related: [],
+            latest: latestData.filter((item) => item._id !== id).slice(0, 10),
           });
         }
 
@@ -180,12 +222,6 @@ export default function NewsDetails({ lang }) {
         <div className="lg:col-span-2">
           <div className="bg-card text-card-foreground shadow-2xl rounded-xl overflow-hidden border border-border">
             <div className="p-6 md:p-10">
-              <div className="mb-4">
-                <span className="inline-flex items-center gap-1 bg-brandRed text-white px-4 py-2 rounded-full text-sm font-bold uppercase shadow-lg">
-                  <Tag size={14} /> {news.category[lang]}
-                </span>
-              </div>
-
               <div className="flex flex-wrap gap-6 mb-6 text-sm text-muted-foreground font-semibold border-b border-border pb-4">
                 <div className="flex items-center gap-2">
                   <Calendar
@@ -350,53 +386,27 @@ export default function NewsDetails({ lang }) {
         <div className="lg:col-span-1">
           <div className="sticky top-24">
             <div className="bg-card text-card-foreground shadow-xl rounded-xl overflow-hidden border border-border">
-              {/* Category sections */}
-              {sidebarData.categories.map((section) => (
-                <div key={section.name}>
-                  <div className="bg-brandRed text-white px-4 py-3">
-                    <h2 className="text-base font-black uppercase italic">
-                      {section.name}
+              {/* Related News section */}
+              {sidebarData.related.length > 0 && (
+                <div>
+                  <div className="bg-brandRed text-white p-4">
+                    <h2 className="text-xl font-black uppercase italic">
+                      {lang === 'bn' ? 'সম্পর্কিত সংবাদ' : 'Related News'}
                     </h2>
                   </div>
-                  <div className="divide-y divide-border max-h-[60vh] overflow-y-auto">
-                    {section.items.map((item) => (
-                      <Link
+                  <div className="divide-y divide-border max-h-[70vh] overflow-y-auto pr-2">
+                    {sidebarData.related.map((item) => (
+                      <SidebarNewsCard
                         key={item._id}
-                        to={`/news/${item._id}`}
-                        className="flex gap-3 p-3 hover:bg-muted transition-colors duration-200 group"
-                      >
-                        <div className="shrink-0">
-                          <img
-                            src={
-                              item.image || getYouTubeThumbnail(item.videoUrl)
-                            }
-                            alt={item.title[lang]}
-                            className="w-16 h-16 object-cover rounded-lg group-hover:brightness-90 transition"
-                            onError={handleImageError}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          {(item.categories || []).length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-1">
-                              {item.categories.slice(0, 2).map((c) => (
-                                <span
-                                  key={c}
-                                  className="text-[9px] bg-muted text-muted-foreground border border-border px-1.5 py-0.5 rounded-full font-bold uppercase"
-                                >
-                                  {c}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <h3 className="text-xs font-bold text-foreground leading-snug line-clamp-3 group-hover:text-brandRed transition-colors">
-                            {item.title[lang]}
-                          </h3>
-                        </div>
-                      </Link>
+                        item={item}
+                        lang={lang}
+                        getYouTubeThumbnail={getYouTubeThumbnail}
+                        handleImageError={handleImageError}
+                      />
                     ))}
                   </div>
                 </div>
-              ))}
+              )}
 
               {/* Latest News section */}
               <div>
@@ -405,37 +415,16 @@ export default function NewsDetails({ lang }) {
                     {lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
                   </h2>
                 </div>
-
                 <div className="divide-y divide-border max-h-[70vh] overflow-y-auto pr-2">
                   {sidebarData.latest.length > 0 ? (
                     sidebarData.latest.map((item) => (
-                      <Link
+                      <SidebarNewsCard
                         key={item._id}
-                        to={`/news/${item._id}`}
-                        className="flex gap-3 p-4 hover:bg-muted transition-colors duration-200 group"
-                      >
-                        <div className="shrink-0">
-                          <img
-                            src={
-                              item.image || getYouTubeThumbnail(item.videoUrl)
-                            }
-                            alt={item.title[lang]}
-                            className="w-20 h-20 object-cover rounded-lg group-hover:brightness-90 transition"
-                            onError={handleImageError}
-                          />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          {item.category && (
-                            <span className="text-xs text-brandRed font-semibold uppercase block mb-1">
-                              {item.category[lang]}
-                            </span>
-                          )}
-                          <h3 className="text-sm font-bold text-foreground leading-snug line-clamp-3 group-hover:text-brandRed transition-colors">
-                            {item.title[lang]}
-                          </h3>
-                        </div>
-                      </Link>
+                        item={item}
+                        lang={lang}
+                        getYouTubeThumbnail={getYouTubeThumbnail}
+                        handleImageError={handleImageError}
+                      />
                     ))
                   ) : (
                     <div className="p-4 text-center text-muted-foreground">
