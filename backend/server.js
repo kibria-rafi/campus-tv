@@ -10,7 +10,6 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-// ── Socket.IO ───────────────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -40,12 +39,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// ── Middleware ───────────────────────────────────────────────────────
-// Allow common local/dev + deployed frontends.
-// Set FRONTEND_URL on Render (e.g. https://campus-tv.onrender.com).
+// Set FRONTEND_URL on Render to the deployed frontend origin.
 const allowedOrigins = [
   process.env.FRONTEND_URL, // e.g. https://campus-tv.onrender.com
-  process.env.FRONTEND_URL_DEV, // optional extra origin
+  process.env.FRONTEND_URL_DEV,
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
@@ -67,7 +64,6 @@ app.use(
 );
 app.use(express.json());
 
-// ── Basic routes (useful for Render health checks) ───────────────────
 app.get('/', (_req, res) => {
   res.status(200).send('Campus TV backend is running.');
 });
@@ -76,8 +72,6 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ ok: true, service: 'campus-tv-backend' });
 });
 
-// --- আপডেট করা নিউজ স্কিমা (Schema) ---
-// এখানে সব ফিল্ড একসাথে দেওয়া হয়েছে যাতে পুনরায় ডিক্লেয়ার করার প্রয়োজন না হয়
 const newsSchema = new mongoose.Schema({
   title: {
     bn: { type: String, required: true },
@@ -98,14 +92,13 @@ const newsSchema = new mongoose.Schema({
     bn: { type: String, default: 'সাধারণ' },
     en: { type: String, default: 'General' },
   },
-  videoUrl: { type: String, default: '' }, // ইউটিউব আইডি জমানোর জন্য
-  isLive: { type: Boolean, default: false }, // লাইভ কি না তা বোঝার জন্য
+  videoUrl: { type: String, default: '' },
+  isLive: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 
-// মডেল ডিক্লেয়ার করার আগে চেক করে নেওয়া হচ্ছে যেন ডুপ্লিকেট না হয়
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
-// --- Employee Schema ---
+
 const employeeSchema = new mongoose.Schema({
   name: { type: String, required: true },
   designation: { type: String, required: true },
@@ -119,9 +112,7 @@ const employeeSchema = new mongoose.Schema({
 
 const Employee =
   mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
-// --- API Routes ---
 
-// ১. এডমিন লগইন রুট
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (
@@ -136,7 +127,6 @@ app.post('/api/admin/login', (req, res) => {
   res.status(401).json({ success: false, message: 'Invalid credentials' });
 });
 
-// ২. নিউজ গেট করার রুট — ভিডিও ও লাইভ পোস্ট বাদ দেওয়া হয়েছে
 app.get('/api/news', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
@@ -157,8 +147,7 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-// ৩. নিউজ সার্চ রুট — GET /api/news/search?q=<string>&limit=<number>
-// Must be declared BEFORE /api/news/:id to prevent Express treating "search" as an id.
+// Must be declared before /api/news/:id to prevent Express treating "search" as an id.
 app.get('/api/news/search', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
@@ -189,13 +178,13 @@ app.get('/api/news/search', async (req, res) => {
 
     const results = docs.map((n) => ({
       id: n._id,
-      title: n.title, // { bn, en }
+      title: n.title,
       snippet: {
         bn: (n.description?.bn || n.subtitle?.bn || '').slice(0, 160),
         en: (n.description?.en || n.subtitle?.en || '').slice(0, 160),
       },
       image: n.image || '',
-      category: n.category, // { bn, en }
+      category: n.category,
       createdAt: n.createdAt,
     }));
 
@@ -208,7 +197,6 @@ app.get('/api/news/search', async (req, res) => {
   }
 });
 
-// ৪. নিউজ পোস্ট করার রুট — videoUrl ও isLive সর্বদা নিষ্ক্রিয়
 app.post('/api/news', async (req, res) => {
   try {
     const body = { ...req.body, videoUrl: '', isLive: false };
@@ -220,7 +208,6 @@ app.post('/api/news', async (req, res) => {
   }
 });
 
-// ৪. নিউজ আপডেট/এডিট করার রুট — videoUrl ও isLive সর্বদা নিষ্ক্রিয়
 app.put('/api/news/:id', async (req, res) => {
   try {
     const body = { ...req.body, videoUrl: '', isLive: false };
@@ -235,7 +222,6 @@ app.put('/api/news/:id', async (req, res) => {
   }
 });
 
-// ৫. নিউজ ডিলিট করার রুট
 app.delete('/api/news/:id', async (req, res) => {
   try {
     const deletedNews = await News.findByIdAndDelete(req.params.id);
@@ -247,8 +233,6 @@ app.delete('/api/news/:id', async (req, res) => {
   }
 });
 
-// ── Employee Routes ──────────────────────────────────────────────────────
-// GET /api/employees - Public endpoint to fetch all employees
 app.get('/api/employees', async (req, res) => {
   try {
     const employees = await Employee.find().sort({ createdAt: -1 });
@@ -258,7 +242,6 @@ app.get('/api/employees', async (req, res) => {
   }
 });
 
-// POST /api/employees - Admin only (Add new employee)
 app.post('/api/employees', async (req, res) => {
   try {
     const newEmployee = new Employee(req.body);
@@ -269,7 +252,6 @@ app.post('/api/employees', async (req, res) => {
   }
 });
 
-// PUT /api/employees/:id - Admin only (Update employee)
 app.put('/api/employees/:id', async (req, res) => {
   try {
     const updatedEmployee = await Employee.findByIdAndUpdate(
@@ -289,7 +271,6 @@ app.put('/api/employees/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/employees/:id - Admin only (Delete employee)
 app.delete('/api/employees/:id', async (req, res) => {
   try {
     const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
@@ -301,16 +282,12 @@ app.delete('/api/employees/:id', async (req, res) => {
   }
 });
 
-// ── Live Viewers REST Endpoint (debug / initial load) ───────────────────
 app.get('/api/live/viewers', async (_req, res) => {
   const sockets = await io.in('live').allSockets();
   res.json({ count: sockets.size });
 });
 
-// ── YouTube RSS Route ────────────────────────────────────────────────────
-// Simple in-memory cache (5-minute TTL) shared by both endpoints
-
-// Public channel ID (can be overridden via env if needed)
+// Simple in-memory cache with 5-minute TTL.
 const YOUTUBE_CHANNEL_ID =
   process.env.YOUTUBE_CHANNEL_ID || 'UCTSpN9ivGWfXz9vVXMUjVcw';
 
@@ -383,7 +360,6 @@ async function fetchYouTubeRSS() {
     return items;
   }
 
-  // ── Primary: direct YouTube RSS with retry on 5xx ───────────────────
   const maxAttempts = 3;
   let primaryError = null;
 
@@ -406,7 +382,7 @@ async function fetchYouTubeRSS() {
     `[YouTube] Primary RSS failed: ${primaryError?.message}. Trying OpenRSS fallback.`
   );
 
-  // ── Fallback: OpenRSS proxy ─────────────────────────────────────────
+  // Fallback: OpenRSS proxy
   try {
     const items = await fetchAndParse(fallbackUrl);
     console.log('[YouTube] OpenRSS fallback succeeded.');
@@ -415,7 +391,7 @@ async function fetchYouTubeRSS() {
     console.warn(`[YouTube] OpenRSS fallback failed: ${fallbackErr?.message}.`);
   }
 
-  // ── Last resort: stale cache ────────────────────────────────────────
+  // Last resort: serve stale cache if available.
   if (ytCache.items && ytCache.items.length) {
     console.warn('[YouTube] Both sources failed. Serving stale cache.');
     return ytCache.items;
@@ -426,7 +402,7 @@ async function fetchYouTubeRSS() {
   );
 }
 
-// ── Legacy endpoint: returns only video ID array ─────────────────────────
+// Legacy: returns video ID array only. Prefer /api/videos/youtube for new callers.
 app.get('/api/youtube/latest', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
@@ -457,14 +433,11 @@ app.get('/api/youtube/latest', async (req, res) => {
   }
 });
 
-// ── New endpoint: returns full structured video items ────────────────────
-// GET /api/videos/youtube?limit=12
 app.get('/api/videos/youtube', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 12, 50);
     const now = Date.now();
 
-    // Reuse cache if fresh
     if (ytCache.items && now - ytCache.timestamp < CACHE_TTL_MS) {
       return res.json({
         source: 'youtube-rss',
@@ -490,9 +463,6 @@ app.get('/api/videos/youtube', async (req, res) => {
   }
 });
 
-// ── Contact Form Endpoint ────────────────────────────────────────────────
-// POST /api/contact
-// Accepts: { name, email, subject, message, company (honeypot) }
 app.post('/api/contact', (req, res) => {
   const { name, email, subject, message, company } = req.body;
 
@@ -501,7 +471,6 @@ app.post('/api/contact', (req, res) => {
     return res.json({ success: true });
   }
 
-  // Basic server-side validation
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Name is required.' });
   }

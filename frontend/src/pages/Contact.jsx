@@ -22,7 +22,6 @@ const SUBJECTS = [
   { value: 'technical', label: { bn: 'টেকনিক্যাল', en: 'Technical' } },
 ];
 
-// ── Input field wrapper ──────────────────────────────────────────────────
 function Field({ label, error, children }) {
   return (
     <div className="flex flex-col gap-1">
@@ -36,7 +35,6 @@ function Field({ label, error, children }) {
 const inputCls =
   'w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brandRed placeholder:text-muted-foreground transition disabled:opacity-50';
 
-// ── Map card ─────────────────────────────────────────────────────────────
 function MapCard({ lang }) {
   const [embedFailed, setEmbedFailed] = useState(false);
 
@@ -76,7 +74,6 @@ function MapCard({ lang }) {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────
 export default function Contact({ lang }) {
   const [form, setForm] = useState({
     name: '',
@@ -92,7 +89,6 @@ export default function Contact({ lang }) {
   const change = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  // Client-side validation
   const validate = () => {
     const e = {};
     if (!form.name.trim())
@@ -153,7 +149,6 @@ export default function Contact({ lang }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      {/* Page header */}
       <div className="mb-10 border-l-8 border-brandRed pl-4">
         <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase italic">
           {lang === 'bn' ? 'যোগাযোগ করুন' : 'Contact Us'}
@@ -165,7 +160,6 @@ export default function Contact({ lang }) {
         </p>
       </div>
 
-      {/* Success banner */}
       {status === 'success' && (
         <div className="mb-6 flex items-start gap-3 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-800 text-green-800 dark:text-green-300 rounded-xl px-4 py-3 text-sm font-semibold">
           <CheckCircle
@@ -180,7 +174,6 @@ export default function Contact({ lang }) {
         </div>
       )}
 
-      {/* Error banner */}
       {status === 'error' && serverError && (
         <div className="mb-6 flex items-start gap-3 bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm font-semibold">
           <AlertCircle
@@ -191,9 +184,7 @@ export default function Contact({ lang }) {
         </div>
       )}
 
-      {/* Two-column layout */}
       <div className="grid md:grid-cols-2 gap-8 items-start">
-        {/* ── Left: Contact form ── */}
         <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-black text-foreground mb-5 uppercase italic tracking-tight">
             {lang === 'bn' ? 'বার্তা পাঠান' : 'Send a Message'}
@@ -310,7 +301,6 @@ export default function Contact({ lang }) {
           </form>
         </div>
 
-        {/* ── Right: Info + map ── */}
         <div className="flex flex-col gap-6">
           {/* Contact info card */}
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col gap-5">
@@ -318,7 +308,6 @@ export default function Contact({ lang }) {
               {lang === 'bn' ? 'যোগাযোগের তথ্য' : 'Contact Info'}
             </h2>
 
-            {/* Email */}
             <div className="flex items-start gap-3">
               <div className="mt-0.5 p-2 rounded-lg bg-brandRed/10 text-brandRed">
                 <Mail size={18} />
@@ -341,7 +330,6 @@ export default function Contact({ lang }) {
               </div>
             </div>
 
-            {/* Location + directions */}
             <div className="flex items-start gap-3">
               <div className="mt-0.5 p-2 rounded-lg bg-brandRed/10 text-brandRed">
                 <MapPin size={18} />
@@ -366,7 +354,6 @@ export default function Contact({ lang }) {
             </div>
           </div>
 
-          {/* Map */}
           <MapCard lang={lang} />
         </div>
       </div>

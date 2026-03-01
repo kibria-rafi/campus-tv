@@ -10,11 +10,9 @@ const HLS_SRC = 'https://owrcovcrpy.gpcdn.net/bpk-tv/1709/output/index.m3u8';
  * Orchestrates live HLS playback with automatic fallback to YouTube archive.
  *
  * Props:
- *   hlsSrc  {string}  – optional override for the HLS stream URL
- *   title   {string}  – display title (default "Live Stream")
- */
-/**
- * variant: 'compact' (homepage, max-w-3xl) | 'full' (live page, max-w-6xl)
+ *   hlsSrc   {string}  – optional override for the HLS stream URL
+ *   title    {string}  – display title (default "Live Stream")
+ *   variant  {string}  – 'compact' (homepage) | 'full' (live page)
  */
 export default function LivePlayer({
   hlsSrc = HLS_SRC,
@@ -22,8 +20,6 @@ export default function LivePlayer({
   variant = 'compact',
 }) {
   const outerWidth = variant === 'full' ? 'max-w-6xl' : 'max-w-3xl';
-  // 'live' → show VideoJsPlayer
-  // 'archive' → show YouTubeArchivePlayer
   const [mode, setMode] = useState('live');
   // Key forces full remount of VideoJsPlayer when retrying live
   const [liveKey, setLiveKey] = useState(0);
@@ -46,7 +42,6 @@ export default function LivePlayer({
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3 px-5 py-3 bg-muted border-b border-border">
-        {/* Pulsing live/archive dot */}
         <span className="relative flex h-3 w-3 shrink-0">
           <span
             className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
@@ -75,7 +70,6 @@ export default function LivePlayer({
             onClick={handleTryLiveAgain}
             className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition"
           >
-            {/* Reload icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -93,7 +87,6 @@ export default function LivePlayer({
         )}
       </div>
 
-      {/* ── Player area ─────────────────────────────────────────────────── */}
       <div className="p-3">
         {mode === 'live' ? (
           <VideoJsPlayer

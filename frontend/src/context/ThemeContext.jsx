@@ -7,10 +7,8 @@ import {
 } from 'react';
 import { applyTheme, getStoredTheme, setStoredTheme } from '../utils/theme';
 
-// ── Context ───────────────────────────────────────────────────────────────────
 const ThemeContext = createContext(null);
 
-// ── Provider ──────────────────────────────────────────────────────────────────
 export function ThemeProvider({ children }) {
   // Default is always LIGHT unless the user has explicitly chosen dark.
   // We intentionally do NOT follow system preference — light is the product default.
@@ -40,7 +38,6 @@ export function ThemeProvider({ children }) {
   );
 }
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
 // eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   const ctx = useContext(ThemeContext);

@@ -8,9 +8,7 @@ export default function Live() {
   return (
     <section className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="w-full max-w-6xl mx-auto px-4 py-12 flex flex-col gap-8 grow">
-        {/* Page header */}
         <div className="space-y-3">
-          {/* Top row: On Air badge + viewer count */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
@@ -35,7 +33,6 @@ export default function Live() {
           </p>
         </div>
 
-        {/* Player */}
         <div className="grow">
           <LivePlayer
             title="Live Stream"
@@ -43,7 +40,6 @@ export default function Live() {
           />
         </div>
 
-        {/* Footer note */}
         <p className="text-center text-muted-foreground text-xs pb-4">
           Campus TV Live &mdash; Official Broadcast
         </p>

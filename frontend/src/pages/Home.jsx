@@ -12,7 +12,6 @@ export default function Home({ lang }) {
   const t = translations[lang];
 
   useEffect(() => {
-    // ব্যাকএন্ড থেকে খবর নিয়ে আসা
     fetch(`${API_BASE}/api/news`)
       .then((res) => res.json())
       .then((data) => {
@@ -34,7 +33,6 @@ export default function Home({ lang }) {
 
   return (
     <div className="space-y-6">
-      {/* ── Live / Archive Player (pinned at top) ── */}
       <section className="w-full">
         <LivePlayer
           title="Live Stream"
@@ -42,13 +40,11 @@ export default function Home({ lang }) {
         />
       </section>
 
-      {/* টিচারে এখন আসল খবর স্ক্রল করবে */}
       <Ticker
         lang={lang}
         newsList={newsList}
       />
 
-      {/* ── News Grid ── */}
       <section className="mt-4">
         <h3 className="text-2xl font-black border-l-8 border-brandRed pl-3 uppercase text-foreground italic mb-6">
           {t.latest}
@@ -60,7 +56,6 @@ export default function Home({ lang }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:auto-rows-[260px]">
-            {/* Featured card — first item */}
             <Link
               to={`/news/${newsList[0]._id}`}
               className="md:col-span-2 lg:col-span-2 group relative overflow-hidden rounded-sm shadow-xl block"
@@ -90,7 +85,6 @@ export default function Home({ lang }) {
               </div>
             </Link>
 
-            {/* Normal cards — items 2–visibleCount */}
             {newsList.slice(1, visibleCount).map((news) => (
               <Link
                 key={news._id}
@@ -119,7 +113,6 @@ export default function Home({ lang }) {
           </div>
         )}
 
-        {/* See More Button */}
         {newsList.length > 11 && visibleCount < newsList.length && (
           <div className="flex justify-center mt-8">
             <button

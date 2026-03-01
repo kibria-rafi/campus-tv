@@ -173,7 +173,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto my-10 px-4 space-y-8 font-sans text-foreground">
-      {/* Header */}
       <div className="flex justify-between items-center bg-card p-6 shadow-sm rounded-2xl border border-border">
         <h1 className="text-2xl font-black text-foreground uppercase italic tracking-tighter">
           Campus TV Admin
@@ -189,7 +188,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Tab Navigation */}
       <div className="flex gap-4 border-b border-border pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('news')}
@@ -213,7 +211,6 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* News Post Tab */}
       {activeTab === 'news' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -366,7 +363,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="bg-card rounded-2xl shadow-lg border border-border overflow-hidden h-200 flex flex-col">
             <div className="bg-muted p-4 border-b border-border font-black text-xs uppercase text-muted-foreground">
               Manage Content
@@ -444,7 +440,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Manage Employees Tab */}
       {activeTab === 'employees' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -537,7 +532,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Employees Sidebar */}
           <div className="bg-card rounded-2xl shadow-lg border border-border overflow-hidden h-200 flex flex-col">
             <div className="bg-muted p-4 border-b border-border font-black text-xs uppercase text-muted-foreground">
               All Employees ({allEmployees.length})

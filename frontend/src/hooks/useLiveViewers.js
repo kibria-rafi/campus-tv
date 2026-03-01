@@ -41,7 +41,7 @@ export function useLiveViewers() {
       setStatus('error');
     });
 
-    // ── Visibility tracking: leave when tab is hidden, rejoin when visible ──
+    // Pause viewer count when tab is hidden; resume on visibility.
     const handleVisibilityChange = () => {
       if (!socket.connected) return;
       if (document.hidden) {
@@ -59,7 +59,7 @@ export function useLiveViewers() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, []); // run once on mount
+  }, []);
 
   return { count, status };
 }

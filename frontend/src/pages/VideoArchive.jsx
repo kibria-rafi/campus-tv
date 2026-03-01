@@ -5,7 +5,6 @@ import { API_BASE } from '../config/api';
 const STEP = 12;
 const MAX = 50;
 
-// ── Skeleton card ────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden animate-pulse">
@@ -19,7 +18,6 @@ function SkeletonCard() {
   );
 }
 
-// ── Modal player ─────────────────────────────────────────────────────────
 function VideoModal({ video, onClose }) {
   // Close on backdrop click or Escape key
   useEffect(() => {
@@ -39,7 +37,6 @@ function VideoModal({ video, onClose }) {
         className="relative w-full max-w-4xl bg-background rounded-2xl overflow-hidden shadow-2xl border border-border"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           aria-label="Close player"
@@ -48,7 +45,6 @@ function VideoModal({ video, onClose }) {
           <X size={20} />
         </button>
 
-        {/* YouTube iframe */}
         <div className="aspect-video w-full">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0`}
@@ -59,7 +55,6 @@ function VideoModal({ video, onClose }) {
           />
         </div>
 
-        {/* Title + date */}
         <div className="px-5 py-4">
           <p className="text-base font-bold text-foreground leading-snug line-clamp-2">
             {video.title}
@@ -79,7 +74,6 @@ function VideoModal({ video, onClose }) {
   );
 }
 
-// ── Video card (grid) ────────────────────────────────────────────────────
 function VideoCard({ video, onClick }) {
   return (
     <button
@@ -96,7 +90,6 @@ function VideoCard({ video, onClick }) {
             e.currentTarget.src = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
           }}
         />
-        {/* Play overlay */}
         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <PlayCircle
             size={48}
@@ -122,7 +115,6 @@ function VideoCard({ video, onClick }) {
   );
 }
 
-// ── Featured card (hero) ─────────────────────────────────────────────────
 function FeaturedCard({ video, onClick }) {
   return (
     <button
@@ -130,7 +122,6 @@ function FeaturedCard({ video, onClick }) {
       className="group w-full text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-brandRed hover:shadow-2xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brandRed"
     >
       <div className="md:flex">
-        {/* Thumbnail */}
         <div className="relative md:w-3/5 aspect-video overflow-hidden bg-muted">
           <img
             src={video.thumbnailUrl}
@@ -152,7 +143,6 @@ function FeaturedCard({ video, onClick }) {
           </span>
         </div>
 
-        {/* Meta */}
         <div className="md:w-2/5 p-5 flex flex-col justify-center gap-3">
           <p className="text-xs font-bold text-brandRed uppercase tracking-widest">
             Latest Upload
@@ -180,7 +170,6 @@ function FeaturedCard({ video, onClick }) {
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────────────
 export default function VideoArchive({ lang }) {
   const [items, setItems] = useState([]);
   const [limit, setLimit] = useState(STEP);
@@ -222,7 +211,6 @@ export default function VideoArchive({ lang }) {
   const rest = items.slice(1);
   const canLoadMore = items.length === limit && limit < MAX;
 
-  // ── Loading state ──────────────────────────────────────────────────────
   if (loading && items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-10">
@@ -244,7 +232,6 @@ export default function VideoArchive({ lang }) {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col items-center justify-center min-h-100 gap-5">
@@ -269,7 +256,6 @@ export default function VideoArchive({ lang }) {
     );
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────
   if (!loading && items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col items-center justify-center min-h-100 gap-4">
@@ -284,10 +270,8 @@ export default function VideoArchive({ lang }) {
     );
   }
 
-  // ── Main render ────────────────────────────────────────────────────────
   return (
     <>
-      {/* Modal */}
       {activeVideo && (
         <VideoModal
           video={activeVideo}
@@ -296,7 +280,6 @@ export default function VideoArchive({ lang }) {
       )}
 
       <div className="max-w-7xl mx-auto px-4 py-10">
-        {/* Header */}
         <div className="mb-8 border-l-8 border-brandRed pl-4">
           <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase italic">
             {lang === 'bn' ? 'ভিডিও আর্কাইভ' : 'Video Archive'}
@@ -308,7 +291,6 @@ export default function VideoArchive({ lang }) {
           </p>
         </div>
 
-        {/* Featured video */}
         {featured && (
           <div className="mb-10">
             <FeaturedCard
@@ -318,7 +300,6 @@ export default function VideoArchive({ lang }) {
           </div>
         )}
 
-        {/* Grid */}
         {rest.length > 0 && (
           <>
             <h2 className="text-sm font-black text-muted-foreground uppercase tracking-widest mb-4">
@@ -341,7 +322,6 @@ export default function VideoArchive({ lang }) {
           </>
         )}
 
-        {/* Load more */}
         {canLoadMore && !loading && (
           <div className="flex justify-center mt-10">
             <button

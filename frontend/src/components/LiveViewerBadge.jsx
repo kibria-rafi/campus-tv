@@ -6,7 +6,6 @@
  *   status {string}  – "connecting" | "connected" | "error"
  */
 export default function LiveViewerBadge({ count, status }) {
-  // ── Connecting state ──────────────────────────────────────────────────
   if (status === 'connecting') {
     return (
       <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground text-xs font-medium">
@@ -16,7 +15,6 @@ export default function LiveViewerBadge({ count, status }) {
     );
   }
 
-  // ── Error / offline state ─────────────────────────────────────────────
   if (status === 'error') {
     return (
       <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-muted-foreground text-xs font-medium">
@@ -26,7 +24,6 @@ export default function LiveViewerBadge({ count, status }) {
     );
   }
 
-  // ── Connected ─────────────────────────────────────────────────────────
   return (
     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-xs font-medium">
       <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse shrink-0" />

@@ -23,7 +23,6 @@ export default function YouTubeArchivePlayer() {
       const res = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json' },
-        // Keep it explicit; helps when debugging CORS in some environments.
         mode: 'cors',
       });
 
@@ -52,7 +51,6 @@ export default function YouTubeArchivePlayer() {
         throw new Error('Empty playlist (no video IDs returned).');
       }
 
-      // Ensure all values are strings.
       const normalized = ids.map(String).filter(Boolean);
       if (normalized.length === 0) {
         throw new Error('Playlist contained invalid video IDs.');
@@ -72,8 +70,6 @@ export default function YouTubeArchivePlayer() {
     fetchVideos();
   }, []);
 
-  // When the user clicks Retry, reset to loading first (this is an event
-  // handler, so synchronous setState is fine here), then re-fetch.
   const handleRetry = () => {
     setStatus('loading');
     fetchVideos();

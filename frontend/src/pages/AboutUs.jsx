@@ -70,7 +70,6 @@ We believe that through news and information dissemination, we can build an educ
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <div className="bg-gradient-to-br from-brandRed via-red-700 to-brandBlack text-white py-16 mb-12 rounded-2xl shadow-2xl">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-black text-center mb-6 uppercase italic tracking-tight">
@@ -84,7 +83,6 @@ We believe that through news and information dissemination, we can build an educ
         </div>
       </div>
 
-      {/* Mission, Vision, Values Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all hover:border-brandRed">
           <div className="flex items-center gap-3 mb-4">
@@ -132,7 +130,6 @@ We believe that through news and information dissemination, we can build an educ
         </div>
       </div>
 
-      {/* Team Section */}
       <div className="mb-12">
         <div className="flex items-center justify-center gap-3 mb-8">
           <Users

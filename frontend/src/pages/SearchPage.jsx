@@ -3,7 +3,6 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Newspaper, SearchX, RefreshCw, Calendar } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
-// Wrap the matched portion in a <mark> element for inline highlighting.
 function Highlight({ text, query }) {
   if (!query || !text) return <>{text}</>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -19,7 +18,6 @@ function Highlight({ text, query }) {
   );
 }
 
-// Skeleton card reused for both news and video loading states.
 function SkeletonCard() {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden animate-pulse">
@@ -90,7 +88,6 @@ export default function SearchPage({ lang }) {
 
   return (
     <div className="space-y-8">
-      {/* Page header */}
       <div className="border-l-8 border-brandRed pl-4 py-2">
         <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase italic">
           {lang === 'bn' ? 'অনুসন্ধান ফলাফল' : 'Search Results'}
@@ -104,7 +101,6 @@ export default function SearchPage({ lang }) {
         )}
       </div>
 
-      {/* Loading skeletons */}
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -113,7 +109,6 @@ export default function SearchPage({ lang }) {
         </div>
       )}
 
-      {/* Error state with retry */}
       {!loading && error && (
         <div className="flex flex-col gap-3 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950/30 px-5 py-4">
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -127,7 +122,6 @@ export default function SearchPage({ lang }) {
         </div>
       )}
 
-      {/* No query prompt */}
       {!loading && !error && !query && (
         <EmptyIllustration
           message={
@@ -138,7 +132,6 @@ export default function SearchPage({ lang }) {
         />
       )}
 
-      {/* No results */}
       {!loading && !error && query && results.length === 0 && (
         <EmptyIllustration
           message={
@@ -149,7 +142,6 @@ export default function SearchPage({ lang }) {
         />
       )}
 
-      {/* Results grid */}
       {!loading && results.length > 0 && (
         <section className="space-y-4">
           <h2 className="flex items-center gap-2 text-xl font-bold text-foreground border-b border-border pb-3">
@@ -243,7 +235,6 @@ export default function SearchPage({ lang }) {
   );
 }
 
-// ── Shared sub-component ─────────────────────────────────────────────────
 function EmptyIllustration({ message }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-4">

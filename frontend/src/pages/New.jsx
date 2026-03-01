@@ -44,7 +44,6 @@ export default function New({ lang }) {
     });
   };
 
-  // Loading Skeleton Component
   const NewsCardSkeleton = () => (
     <div className="group flex flex-col overflow-hidden rounded-lg shadow-md bg-card border border-border animate-pulse">
       <div className="w-full h-48 bg-muted"></div>
@@ -57,7 +56,6 @@ export default function New({ lang }) {
     </div>
   );
 
-  // Empty State Component
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
       <Newspaper
@@ -77,7 +75,6 @@ export default function New({ lang }) {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="border-l-8 border-brandRed pl-4 py-2">
         <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase italic">
           {lang === 'bn' ? 'সকল সংবাদ' : 'All News'}
@@ -89,7 +86,6 @@ export default function New({ lang }) {
         </p>
       </div>
 
-      {/* Loading State */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(9)].map((_, index) => (
@@ -100,7 +96,6 @@ export default function New({ lang }) {
         <EmptyState />
       ) : (
         <>
-          {/* News Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {newsList.slice(0, limit).map((news) => (
               <Link
@@ -108,7 +103,6 @@ export default function New({ lang }) {
                 to={`/news/${news._id}`}
                 className="group flex flex-col overflow-hidden rounded-lg shadow-md bg-card border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                {/* Image */}
                 <div className="overflow-hidden shrink-0 relative">
                   <img
                     src={news.image || '/logo.png'}
@@ -116,7 +110,6 @@ export default function New({ lang }) {
                     alt={news.title[lang]}
                     onError={handleImageError}
                   />
-                  {/* Category Badge */}
                   {news.category && (
                     <span className="absolute top-3 left-3 bg-brandRed text-white px-3 py-1 text-xs font-bold uppercase rounded-full shadow-lg">
                       {news.category[lang]}
@@ -124,14 +117,11 @@ export default function New({ lang }) {
                   )}
                 </div>
 
-                {/* Content */}
                 <div className="p-4 flex flex-col flex-1">
-                  {/* Title */}
                   <h3 className="font-bold text-base leading-snug line-clamp-2 text-foreground group-hover:text-brandRed transition-colors duration-200 mb-2">
                     {news.title[lang]}
                   </h3>
 
-                  {/* Subtitle (if available) */}
                   {news.subtitle &&
                     news.subtitle[lang] &&
                     news.subtitle[lang].trim() !== '' && (
@@ -140,7 +130,6 @@ export default function New({ lang }) {
                       </p>
                     )}
 
-                  {/* Date */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-auto pt-2 border-t border-border">
                     <Calendar
                       size={14}
@@ -153,7 +142,6 @@ export default function New({ lang }) {
             ))}
           </div>
 
-          {/* See More Button */}
           {newsList.length > 9 && limit < newsList.length && (
             <div className="flex justify-center mt-8">
               <button

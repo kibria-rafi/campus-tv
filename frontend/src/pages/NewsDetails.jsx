@@ -33,10 +33,8 @@ export default function NewsDetails({ lang }) {
           setNews(selectedNews);
         }
 
-        // Fetch latest 6 news from the new endpoint
         const latestRes = await fetch(`${API_BASE}/api/news?limit=6`);
         const latestData = await latestRes.json();
-        // Exclude the current news from latest
         const filtered = latestData.filter((item) => item._id !== id);
         setLatestNews(filtered.slice(0, 6));
 
@@ -144,7 +142,6 @@ export default function NewsDetails({ lang }) {
 
   return (
     <div className="max-w-7xl mx-auto mt-6 mb-10 px-4">
-      {/* Back Button */}
       <div className="bg-muted p-2 border-b border-border rounded-t-xl mb-4">
         <button
           onClick={() => navigate(-1)}
@@ -154,20 +151,16 @@ export default function NewsDetails({ lang }) {
         </button>
       </div>
 
-      {/* Two-column grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content - Left Column (2/3 width) */}
         <div className="lg:col-span-2">
           <div className="bg-card text-card-foreground shadow-2xl rounded-xl overflow-hidden border border-border">
             <div className="p-6 md:p-10">
-              {/* 1. Category Badge */}
               <div className="mb-4">
                 <span className="inline-flex items-center gap-1 bg-brandRed text-white px-4 py-2 rounded-full text-sm font-bold uppercase shadow-lg">
                   <Tag size={14} /> {news.category[lang]}
                 </span>
               </div>
 
-              {/* 2. Date and Time */}
               <div className="flex flex-wrap gap-6 mb-6 text-sm text-muted-foreground font-semibold border-b border-border pb-4">
                 <div className="flex items-center gap-2">
                   <Calendar
@@ -193,19 +186,16 @@ export default function NewsDetails({ lang }) {
                 )}
               </div>
 
-              {/* 3. Title */}
               <h1 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight">
                 {news.title[lang]}
               </h1>
 
-              {/* 4. Subtitle */}
               {news.subtitle && news.subtitle[lang] && (
                 <h2 className="text-xl md:text-2xl font-semibold text-muted-foreground mb-8 leading-relaxed italic">
                   {news.subtitle[lang]}
                 </h2>
               )}
 
-              {/* Social Share Buttons */}
               <div className="flex items-center gap-3 mb-8 pb-6 border-b border-border">
                 <span className="text-sm font-bold text-muted-foreground">
                   {lang === 'bn' ? 'শেয়ার করুন:' : 'Share:'}
@@ -240,7 +230,6 @@ export default function NewsDetails({ lang }) {
                 </button>
               </div>
 
-              {/* 5. Main Image with Caption */}
               <div className="mb-8">
                 {news.videoUrl ? (
                   <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
@@ -270,7 +259,6 @@ export default function NewsDetails({ lang }) {
                 )}
               </div>
 
-              {/* 6. Reporter Name & Font Size Controls */}
               <div className="flex items-center justify-between mb-8 pb-4 border-b border-border">
                 <div>
                   {news.reporterName && (
@@ -306,7 +294,6 @@ export default function NewsDetails({ lang }) {
                 </div>
               </div>
 
-              {/* 7. Full Description */}
               <div
                 className="text-foreground leading-loose whitespace-pre-line first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
                 style={{ fontSize: `${fontSize}px` }}
@@ -317,18 +304,15 @@ export default function NewsDetails({ lang }) {
           </div>
         </div>
 
-        {/* Sidebar - Right Column (1/3 width) */}
         <div className="lg:col-span-1">
           <div className="sticky top-24">
             <div className="bg-card text-card-foreground shadow-xl rounded-xl overflow-hidden border border-border">
-              {/* Sidebar Header */}
               <div className="bg-brandRed text-white p-4">
                 <h2 className="text-xl font-black uppercase italic">
                   {lang === 'bn' ? 'সর্বশেষ সংবাদ' : 'Latest News'}
                 </h2>
               </div>
 
-              {/* Latest News List */}
               <div className="divide-y divide-border">
                 {latestNews.length > 0 ? (
                   latestNews.map((item) => (
@@ -337,7 +321,6 @@ export default function NewsDetails({ lang }) {
                       to={`/news/${item._id}`}
                       className="flex gap-3 p-4 hover:bg-muted transition-colors duration-200 group"
                     >
-                      {/* Thumbnail */}
                       <div className="shrink-0">
                         <img
                           src={item.image || getYouTubeThumbnail(item.videoUrl)}
@@ -347,7 +330,6 @@ export default function NewsDetails({ lang }) {
                         />
                       </div>
 
-                      {/* Title and Category */}
                       <div className="flex-1 min-w-0">
                         {item.category && (
                           <span className="text-xs text-brandRed font-semibold uppercase block mb-1">

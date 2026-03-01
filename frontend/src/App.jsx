@@ -18,7 +18,6 @@ import VideoArchive from './pages/VideoArchive';
 import Contact from './pages/Contact';
 import New from './pages/New';
 import SearchPage from './pages/SearchPage';
-// প্রোটেক্টেড রাউট ফাংশন - Admin Dashboard এর জন্য
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
   return token ? children : <Navigate to="/admin" />;
@@ -35,22 +34,18 @@ function App() {
           setLang={setLang}
         />
         <Routes>
-          {/*
-           * /live renders its own full-screen dark layout — no container
-           * wrapper applied here so the page is truly immersive.
-           */}
+          {/* /live uses its own full-screen layout — no container wrapper. */}
           <Route
             path="/live"
             element={<Live lang={lang} />}
           />
 
-          {/* All other pages — wrapped in the standard centered container */}
+          {/* All other pages use the standard centered container */}
           <Route
             path="*"
             element={
               <main className="container mx-auto px-4 py-6 grow">
                 <Routes>
-                  {/* সাধারণ রাউটসমূহ */}
                   <Route
                     path="/"
                     element={<Home lang={lang} />}
@@ -81,13 +76,11 @@ function App() {
                     element={<SearchPage lang={lang} />}
                   />
 
-                  {/* অ্যাডমিন লগইন - /admin এ Admin Login পেজ দেখাবে */}
                   <Route
                     path="/admin"
                     element={<Login lang={lang} />}
                   />
 
-                  {/* অ্যাডমিন ড্যাশবোর্ড - প্রোটেক্টেড */}
                   <Route
                     path="/dashboard"
                     element={
@@ -97,7 +90,6 @@ function App() {
                     }
                   />
 
-                  {/* ভুল URL দিলে হোমপেজে রিডাইরেক্ট করবে */}
                   <Route
                     path="*"
                     element={<Navigate to="/" />}

@@ -81,7 +81,6 @@ export default function Navbar({ lang, setLang }) {
     <nav className="bg-card border-b-4 border-brandRed sticky top-0 z-50 shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 py-0 md:py-4">
-          {/* ১. লোগো সেকশন */}
           <Link
             to="/"
             className="flex items-center shrink-0 cursor-pointer"
@@ -93,7 +92,6 @@ export default function Navbar({ lang, setLang }) {
             />
           </Link>
 
-          {/* ডেস্কটপ মেনু */}
           <div className="hidden lg:flex space-x-8 font-bold text-foreground text-lg italic">
             <Link
               to="/"
@@ -121,7 +119,6 @@ export default function Navbar({ lang, setLang }) {
             </Link>
           </div>
 
-          {/* DESKTOP TOP BAR: Language, Theme, Video, Live */}
           <div className="hidden md:flex items-center gap-3 md:gap-6">
             <div
               ref={desktopSearchRef}
@@ -154,7 +151,6 @@ export default function Navbar({ lang, setLang }) {
               )}
             </div>
 
-            {/* ভাষা পরিবর্তন */}
             <div className="flex items-center space-x-1 border border-border rounded px-2 py-1 bg-muted">
               <Globe
                 size={16}
@@ -170,7 +166,6 @@ export default function Navbar({ lang, setLang }) {
               </select>
             </div>
 
-            {/* থিম টোগল বাটন */}
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
@@ -178,7 +173,6 @@ export default function Navbar({ lang, setLang }) {
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            {/* ভিডিও বাটন */}
             <Link
               to="/video"
               aria-label="Video"
@@ -190,7 +184,6 @@ export default function Navbar({ lang, setLang }) {
               />
               <span className="text-sm md:text-base">{t.video}</span>
             </Link>
-            {/* লাইভ বাটন */}
             <Link
               to="/live"
               className="flex items-center gap-2 bg-brandRed text-white px-5 py-2 rounded font-black animate-pulse shadow-md text-sm uppercase"
@@ -200,9 +193,7 @@ export default function Navbar({ lang, setLang }) {
             </Link>
           </div>
 
-          {/* MOBILE TOP BAR CONTROLS (right side only): Live, Dark‑mode icon, Hamburger */}
           <div className="flex md:hidden items-center gap-3">
-            {/* লাইভ বাটন (মোবাইল) — show full text + icon */}
             <Link
               to="/live"
               className="inline-flex items-center justify-center gap-2 h-10 px-3 rounded-md text-sm font-semibold bg-brandRed text-white animate-pulse shadow-md whitespace-nowrap"
@@ -211,7 +202,6 @@ export default function Navbar({ lang, setLang }) {
               <span className="leading-none">{t.live}</span>
             </Link>
 
-            {/* dark mode icon only */}
             <button
               onClick={toggleTheme}
               aria-label="Toggle dark mode"
@@ -220,7 +210,6 @@ export default function Navbar({ lang, setLang }) {
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
-            {/* মোবাইল মেনু বাটন */}
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-muted transition"
               onClick={toggleMobileMenu}
@@ -231,10 +220,8 @@ export default function Navbar({ lang, setLang }) {
           </div>
         </div>
 
-        {/* মোবাইল ড্রপডাউন মেনু */}
         {isOpen && (
           <div className="lg:hidden bg-popover text-popover-foreground border-t border-border pb-6 shadow-xl">
-            {/* Section A – main navigation */}
             <div className="flex flex-col mt-4 px-4 font-bold text-foreground">
               <Link
                 to="/"
@@ -291,7 +278,6 @@ export default function Navbar({ lang, setLang }) {
                 </form>
               )}
 
-              {/* ভাষা/Translate - row with chevron */}
               <div className="relative flex items-center justify-between w-full py-4 border-b border-border text-lg">
                 <div className="flex items-center gap-3">
                   <Globe
@@ -316,7 +302,7 @@ export default function Navbar({ lang, setLang }) {
                     />
                   </svg>
                 </div>
-                {/* invisible select overlay to trigger language change */}
+                {/* Overlay select to trigger language change without visible dropdown */}
                 <select
                   value={lang}
                   onChange={(e) => {
@@ -331,7 +317,6 @@ export default function Navbar({ lang, setLang }) {
               </div>
             </div>
 
-            {/* Section B – quick actions */}
             <div className="mt-6 px-4 space-y-3">
               <Link
                 to="/video"

@@ -20,7 +20,7 @@ export default function Login({ lang }) {
 
       if (data.success) {
         localStorage.setItem('adminToken', data.token);
-        navigate('/dashboard'); // Redirect to dashboard after successful login
+        navigate('/dashboard');
       } else {
         alert(
           isBn ? 'ইউজারনেম বা পাসওয়ার্ড ভুল!' : 'Invalid username or password!'
