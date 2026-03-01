@@ -125,19 +125,6 @@ const newsSchema = new mongoose.Schema({
 
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
 
-const employeeSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  designation: { type: String, required: true },
-  bio: {
-    bn: { type: String, required: true },
-    en: { type: String, required: true },
-  },
-  imageURL: { type: String, default: '' },
-  createdAt: { type: Date, default: Date.now },
-});
-
-const Employee =
-  mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
 
 // ── Stream Settings ────────────────────────────────────────────────────────
 // Single-document collection that stores the live stream URLs.
@@ -364,55 +351,6 @@ app.delete('/api/news/:id', async (req, res) => {
     if (!deletedNews)
       return res.status(404).json({ message: 'News not found' });
     res.json({ success: true, message: 'News deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/employees', async (req, res) => {
-  try {
-    const employees = await Employee.find().sort({ createdAt: -1 });
-    res.json(employees);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/employees', async (req, res) => {
-  try {
-    const newEmployee = new Employee(req.body);
-    await newEmployee.save();
-    res.json({ success: true, message: 'Employee added successfully!' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.put('/api/employees/:id', async (req, res) => {
-  try {
-    const updatedEmployee = await Employee.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    if (!updatedEmployee)
-      return res.status(404).json({ message: 'Employee not found' });
-    res.json({
-      success: true,
-      message: 'Employee updated successfully!',
-      updatedEmployee,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/employees/:id', async (req, res) => {
-  try {
-    const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
-    if (!deletedEmployee)
-      return res.status(404).json({ message: 'Employee not found' });
-    res.json({ success: true, message: 'Employee deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
