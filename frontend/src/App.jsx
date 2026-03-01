@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BottomNav from './components/BottomNav';
 import Home from './pages/Home';
 import NewsDetails from './pages/NewsDetails';
 import Login from './pages/Login';
@@ -44,7 +45,7 @@ function App() {
           <Route
             path="*"
             element={
-              <main className="container mx-auto px-4 py-6 grow">
+              <main className="container mx-auto px-4 py-6 pb-20 md:pb-6 grow">
                 <Routes>
                   <Route
                     path="/"
@@ -100,6 +101,7 @@ function App() {
           />
         </Routes>
         <Footer lang={lang} />
+        <BottomNav lang={lang} />
       </div>
     </Router>
   );
