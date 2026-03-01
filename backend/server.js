@@ -41,12 +41,17 @@ io.on('connection', (socket) => {
 });
 
 // ── Middleware ───────────────────────────────────────────────────────
-// Allow common local/dev + deployed frontends. You can override with FRONTEND_URL.
+// Allow common local/dev + deployed frontends.
+// Set FRONTEND_URL on Render (e.g. https://campus-tv.onrender.com).
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // preferred
+  process.env.FRONTEND_URL, // e.g. https://campus-tv.onrender.com
+  process.env.FRONTEND_URL_DEV, // optional extra origin
   'http://localhost:5173',
+  'http://localhost:3000',
   'http://127.0.0.1:5173',
 ].filter(Boolean);
+
+console.log('[CORS] Allowed origins:', allowedOrigins);
 
 app.use(
   cors({
@@ -112,7 +117,8 @@ const employeeSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Employee = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
+const Employee =
+  mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
 // --- API Routes ---
 
 // ১. এডমিন লগইন রুট
@@ -222,7 +228,11 @@ app.put('/api/employees/:id', async (req, res) => {
     );
     if (!updatedEmployee)
       return res.status(404).json({ message: 'Employee not found' });
-    res.json({ success: true, message: 'Employee updated successfully!', updatedEmployee });
+    res.json({
+      success: true,
+      message: 'Employee updated successfully!',
+      updatedEmployee,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -248,47 +258,121 @@ app.get('/api/live/viewers', async (_req, res) => {
 
 // ── YouTube RSS Route ────────────────────────────────────────────────────
 // Simple in-memory cache (5-minute TTL) shared by both endpoints
-const YOUTUBE_CHANNEL_ID = 'UCTSpN9ivGWfXz9vVXMUjVcw';
+
+// Public channel ID (can be overridden via env if needed)
+const YOUTUBE_CHANNEL_ID =
+  process.env.YOUTUBE_CHANNEL_ID || 'UCTSpN9ivGWfXz9vVXMUjVcw';
+
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 let ytCache = { videoIds: null, items: null, timestamp: 0 };
 
-/** Fetch + parse the YouTube RSS feed and return an array of item objects. */
+/** Fetch + parse the YouTube RSS feed and return an array of item objects.
+ *  Strategy:
+ *   1. Try direct YouTube RSS feed.
+ *   2. On failure (non-200, HTML response, or parse error) fall back to OpenRSS proxy.
+ *   3. If both fail, serve stale cache when available; otherwise throw.
+ */
 async function fetchYouTubeRSS() {
-  const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
-  const response = await fetch(rssUrl);
-  if (!response.ok) {
-    throw new Error(`YouTube RSS responded with ${response.status}`);
+  const directUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
+  const fallbackUrl = `https://openrss.org/youtube/channel/${YOUTUBE_CHANNEL_ID}`;
+
+  const headers = {
+    'User-Agent':
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    Accept: 'application/xml,text/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+  };
+
+  /** Parse an XML string into an item array, or return null on failure. */
+  function parseXML(xmlText) {
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '@_',
+    });
+    const parsed = parser.parse(xmlText);
+    const entries = parsed?.feed?.entry ?? [];
+    const entryArray = Array.isArray(entries) ? entries : [entries];
+    if (!entryArray.length) return null;
+
+    const items = entryArray
+      .map((e) => {
+        const id = e['yt:videoId'];
+        if (!id) return null;
+        return {
+          id,
+          title: e.title ?? '',
+          publishedAt: e.published ?? null,
+          watchUrl: `https://www.youtube.com/watch?v=${id}`,
+          thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        };
+      })
+      .filter(Boolean);
+
+    return items.length ? items : null;
   }
-  const xmlText = await response.text();
 
-  const parser = new XMLParser({
-    ignoreAttributes: false,
-    attributeNamePrefix: '@_',
-  });
-  const parsed = parser.parse(xmlText);
+  /** Fetch a URL, ensure it returns XML (not HTML), parse and return items. */
+  async function fetchAndParse(url) {
+    const response = await fetch(url, { headers });
 
-  const entries = parsed?.feed?.entry ?? [];
-  const entryArray = Array.isArray(entries) ? entries : [entries];
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
-  if (!entryArray.length) {
-    throw new Error('No videos found in RSS feed');
+    const contentType = response.headers.get('content-type') ?? '';
+    if (contentType.includes('text/html')) {
+      throw new Error(
+        `Received HTML instead of XML (content-type: ${contentType})`
+      );
+    }
+
+    const xmlText = await response.text();
+    const items = parseXML(xmlText);
+    if (!items) throw new Error('No videos found in RSS feed');
+    return items;
   }
 
-  const items = entryArray
-    .map((e) => {
-      const id = e['yt:videoId'];
-      if (!id) return null;
-      return {
-        id,
-        title: e.title ?? '',
-        publishedAt: e.published ?? null,
-        watchUrl: `https://www.youtube.com/watch?v=${id}`,
-        thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-      };
-    })
-    .filter(Boolean);
+  // ── Primary: direct YouTube RSS with retry on 5xx ───────────────────
+  const maxAttempts = 3;
+  let primaryError = null;
 
-  return items;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fetchAndParse(directUrl);
+    } catch (err) {
+      primaryError = err;
+      const statusMatch = String(err.message).match(/HTTP (\d+)/);
+      const status = statusMatch ? parseInt(statusMatch[1], 10) : 0;
+      if (status >= 500 && status <= 599 && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+        continue;
+      }
+      break;
+    }
+  }
+
+  console.warn(
+    `[YouTube] Primary RSS failed: ${primaryError?.message}. Trying OpenRSS fallback.`
+  );
+
+  // ── Fallback: OpenRSS proxy ─────────────────────────────────────────
+  try {
+    const items = await fetchAndParse(fallbackUrl);
+    console.log('[YouTube] OpenRSS fallback succeeded.');
+    return items;
+  } catch (fallbackErr) {
+    console.warn(`[YouTube] OpenRSS fallback failed: ${fallbackErr?.message}.`);
+  }
+
+  // ── Last resort: stale cache ────────────────────────────────────────
+  if (ytCache.items && ytCache.items.length) {
+    console.warn('[YouTube] Both sources failed. Serving stale cache.');
+    return ytCache.items;
+  }
+
+  throw new Error(
+    `YouTube RSS unavailable. Primary error: ${primaryError?.message}`
+  );
 }
 
 // ── Legacy endpoint: returns only video ID array ─────────────────────────
@@ -296,18 +380,26 @@ app.get('/api/youtube/latest', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const now = Date.now();
+    console.log(
+      `[YouTube] GET /api/youtube/latest?limit=${limit} — from origin: ${req.headers.origin || 'n/a'}`
+    );
 
     if (ytCache.videoIds && now - ytCache.timestamp < CACHE_TTL_MS) {
+      console.log(
+        '[YouTube] Returning cached result, count:',
+        ytCache.videoIds.length
+      );
       return res.json({ videoIds: ytCache.videoIds.slice(0, limit) });
     }
 
     const items = await fetchYouTubeRSS();
     const videoIds = items.map((i) => i.id);
     ytCache = { videoIds, items, timestamp: now };
+    console.log('[YouTube] Fetched fresh RSS, count:', videoIds.length);
 
     return res.json({ videoIds: videoIds.slice(0, limit) });
   } catch (err) {
-    console.error('YouTube RSS error:', err.message);
+    console.error('[YouTube] RSS fetch error:', err);
     res
       .status(502)
       .json({ error: 'Failed to fetch YouTube archive', details: err.message });
@@ -340,7 +432,7 @@ app.get('/api/videos/youtube', async (req, res) => {
       items: items.slice(0, limit),
     });
   } catch (err) {
-    console.error('YouTube RSS error:', err.message);
+    console.error('[YouTube] RSS fetch error:', err);
     res
       .status(502)
       .json({ error: 'Failed to fetch YouTube archive', details: err.message });
