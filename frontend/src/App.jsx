@@ -17,6 +17,7 @@ import Live from './pages/Live';
 import VideoArchive from './pages/VideoArchive';
 import Contact from './pages/Contact';
 import New from './pages/New';
+import SearchPage from './pages/SearchPage';
 // প্রোটেক্টেড রাউট ফাংশন - Admin Dashboard এর জন্য
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
@@ -73,6 +74,11 @@ function App() {
                   <Route
                     path="/news/:id"
                     element={<NewsDetails lang={lang} />}
+                  />
+
+                  <Route
+                    path="/search"
+                    element={<SearchPage lang={lang} />}
                   />
 
                   {/* অ্যাডমিন লগইন - /admin এ Admin Login পেজ দেখাবে */}

@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { translations } from '../data';
 import {
   Menu,
   X,
+  Search,
   PlayCircle,
   Globe,
   Radio,
@@ -15,8 +16,66 @@ import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar({ lang, setLang }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const desktopSearchRef = useRef(null);
+  const navigate = useNavigate();
   const t = translations[lang];
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsDesktopSearchOpen(false);
+        setIsMobileSearchOpen(false);
+      }
+    };
+
+    const handleClickOutside = (event) => {
+      if (
+        isDesktopSearchOpen &&
+        desktopSearchRef.current &&
+        !desktopSearchRef.current.contains(event.target)
+      ) {
+        setIsDesktopSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDesktopSearchOpen]);
+
+  const handleSearchSubmit = (event, source) => {
+    event.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSearchQuery('');
+    setIsDesktopSearchOpen(false);
+    if (source === 'Mobile') {
+      closeMobileMenu();
+    }
+  };
+
+  const toggleMobileMenu = () => {
+    const nextIsOpen = !isOpen;
+    setIsOpen(nextIsOpen);
+
+    if (!nextIsOpen) {
+      setIsMobileSearchOpen(false);
+    }
+  };
+
+  const closeMobileMenu = () => {
+    setIsOpen(false);
+    setIsMobileSearchOpen(false);
+  };
 
   return (
     <nav className="bg-card border-b-4 border-brandRed sticky top-0 z-50 shadow-md">
@@ -25,7 +84,7 @@ export default function Navbar({ lang, setLang }) {
           {/* ১. লোগো সেকশন */}
           <Link
             to="/"
-            className="flex items-center flex-shrink-0 cursor-pointer"
+            className="flex items-center shrink-0 cursor-pointer"
           >
             <img
               src="/logo.png"
@@ -64,6 +123,37 @@ export default function Navbar({ lang, setLang }) {
 
           {/* DESKTOP TOP BAR: Language, Theme, Video, Live */}
           <div className="hidden md:flex items-center gap-3 md:gap-6">
+            <div
+              ref={desktopSearchRef}
+              className="relative hidden md:flex items-center"
+            >
+              <button
+                type="button"
+                onClick={() => setIsDesktopSearchOpen((prev) => !prev)}
+                aria-label="Search"
+                className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition"
+              >
+                <Search size={18} />
+              </button>
+
+              {isDesktopSearchOpen && (
+                <form
+                  onSubmit={(event) => handleSearchSubmit(event, 'Desktop')}
+                  className="absolute right-0 top-full mt-2 w-64 rounded-md border border-border bg-card p-2 shadow-lg"
+                >
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search..."
+                    aria-label="Search"
+                    className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brandRed"
+                    autoFocus
+                  />
+                </form>
+              )}
+            </div>
+
             {/* ভাষা পরিবর্তন */}
             <div className="flex items-center space-x-1 border border-border rounded px-2 py-1 bg-muted">
               <Globe
@@ -133,7 +223,7 @@ export default function Navbar({ lang, setLang }) {
             {/* মোবাইল মেনু বাটন */}
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-muted transition"
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={toggleMobileMenu}
               aria-label="Toggle menu"
             >
               {isOpen ? <X size={26} /> : <Menu size={26} />}
@@ -148,32 +238,58 @@ export default function Navbar({ lang, setLang }) {
             <div className="flex flex-col mt-4 px-4 font-bold text-foreground">
               <Link
                 to="/"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.home}
               </Link>
               <Link
                 to="/news"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.news}
               </Link>
               <Link
                 to="/about"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.about}
               </Link>
               <Link
                 to="/contact"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.contact || 'Contact'}
               </Link>
+
+              <button
+                type="button"
+                onClick={() => setIsMobileSearchOpen((prev) => !prev)}
+                aria-label="Search"
+                className="flex items-center gap-2 py-4 border-b border-border hover:text-brandRed text-lg text-left"
+              >
+                <Search size={18} />
+                <span>Search</span>
+              </button>
+
+              {isMobileSearchOpen && (
+                <form
+                  onSubmit={(event) => handleSearchSubmit(event, 'Mobile')}
+                  className="pt-3 pb-4 border-b border-border"
+                >
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search..."
+                    aria-label="Search"
+                    className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brandRed"
+                  />
+                </form>
+              )}
 
               {/* ভাষা/Translate - row with chevron */}
               <div className="relative flex items-center justify-between w-full py-4 border-b border-border text-lg">
@@ -205,7 +321,7 @@ export default function Navbar({ lang, setLang }) {
                   value={lang}
                   onChange={(e) => {
                     setLang(e.target.value);
-                    setIsOpen(false);
+                    closeMobileMenu();
                   }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 >
@@ -220,7 +336,7 @@ export default function Navbar({ lang, setLang }) {
               <Link
                 to="/video"
                 aria-label="Video"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
                 className="flex items-center justify-center space-x-2 bg-primary text-primary-foreground py-3 rounded-md w-full"
               >
                 <PlayCircle size={20} />
@@ -229,7 +345,7 @@ export default function Navbar({ lang, setLang }) {
 
               <Link
                 to="/live"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
                 className="flex items-center justify-center space-x-2 bg-brandRed text-white py-3 rounded-md w-full font-black animate-pulse"
               >
                 <Radio size={20} />

@@ -157,7 +157,58 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-// ৩. নিউজ পোস্ট করার রুট — videoUrl ও isLive সর্বদা নিষ্ক্রিয়
+// ৩. নিউজ সার্চ রুট — GET /api/news/search?q=<string>&limit=<number>
+// Must be declared BEFORE /api/news/:id to prevent Express treating "search" as an id.
+app.get('/api/news/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+
+    // Return early for missing / too-short queries
+    if (q.length < 2) {
+      return res.json({ results: [] });
+    }
+
+    // Escape special regex characters to prevent ReDoS
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = new RegExp(escaped, 'i');
+
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+
+    const docs = await News.find({
+      $or: [
+        { 'title.bn': rx },
+        { 'title.en': rx },
+        { 'subtitle.bn': rx },
+        { 'subtitle.en': rx },
+        { 'description.bn': rx },
+        { 'description.en': rx },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    const results = docs.map((n) => ({
+      id: n._id,
+      title: n.title, // { bn, en }
+      snippet: {
+        bn: (n.description?.bn || n.subtitle?.bn || '').slice(0, 160),
+        en: (n.description?.en || n.subtitle?.en || '').slice(0, 160),
+      },
+      image: n.image || '',
+      category: n.category, // { bn, en }
+      createdAt: n.createdAt,
+    }));
+
+    return res.json({ results });
+  } catch (err) {
+    console.error('[Search] News search failed:', err);
+    return res
+      .status(500)
+      .json({ error: 'News search failed', details: err.message });
+  }
+});
+
+// ৪. নিউজ পোস্ট করার রুট — videoUrl ও isLive সর্বদা নিষ্ক্রিয়
 app.post('/api/news', async (req, res) => {
   try {
     const body = { ...req.body, videoUrl: '', isLive: false };
