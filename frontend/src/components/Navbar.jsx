@@ -5,7 +5,6 @@ import {
   Menu,
   X,
   Search,
-  PlayCircle,
   Globe,
   Radio,
   Sun,
@@ -13,6 +12,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+
+import fmIcon from '../assets/fm.png';
 
 export default function Navbar({ lang, setLang }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -106,6 +107,12 @@ export default function Navbar({ lang, setLang }) {
               {t.news}
             </Link>
             <Link
+              to="/video"
+              className="hover:text-brandRed transition underline-offset-4 hover:underline"
+            >
+              {t.video}
+            </Link>
+            <Link
               to="/about"
               className="hover:text-brandRed transition underline-offset-4 hover:underline"
             >
@@ -168,15 +175,16 @@ export default function Navbar({ lang, setLang }) {
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <Link
-              to="/video"
-              aria-label="Video"
+              to="/campus-radio"
+              aria-label="Campus Radio"
               className="flex items-center space-x-2 bg-primary text-primary-foreground px-3 py-2 rounded-md font-bold hover:opacity-90 transition shadow-lg"
             >
-              <PlayCircle
-                size={20}
-                className="text-brandRed"
+              <img
+                src={fmIcon}
+                alt="Campus Radio"
+                className="w-[18px] h-[18px] object-contain"
               />
-              <span className="text-sm md:text-base">{t.video}</span>
+              <span className="text-xs md:text-sm">Campus Radio</span>
             </Link>
             <Link
               to="/live"
@@ -230,6 +238,13 @@ export default function Navbar({ lang, setLang }) {
                 className="py-4 border-b border-border hover:text-brandRed text-lg"
               >
                 {t.news}
+              </Link>
+              <Link
+                to="/video"
+                onClick={closeMobileMenu}
+                className="py-4 border-b border-border hover:text-brandRed text-lg"
+              >
+                {t.video}
               </Link>
               <Link
                 to="/about"
@@ -306,13 +321,17 @@ export default function Navbar({ lang, setLang }) {
 
             <div className="mt-6 px-4 space-y-3">
               <Link
-                to="/video"
-                aria-label="Video"
+                to="/campus-radio"
                 onClick={closeMobileMenu}
+                aria-label="Campus Radio"
                 className="flex items-center justify-center space-x-2 bg-primary text-primary-foreground py-3 rounded-md w-full"
               >
-                <PlayCircle size={20} />
-                <span>{t.video}</span>
+                <img
+                  src={fmIcon}
+                  alt="Campus Radio"
+                  className="w-[18px] h-[18px] object-contain"
+                />
+                <span className="text-sm">Campus Radio</span>
               </Link>
 
               <Link

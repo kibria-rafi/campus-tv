@@ -20,6 +20,7 @@ import VideoArchive from './pages/VideoArchive';
 import Contact from './pages/Contact';
 import New from './pages/New';
 import SearchPage from './pages/SearchPage';
+import CampusRadio from './pages/CampusRadio';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
   return token ? children : <Navigate to="/admin" />;
@@ -79,6 +80,10 @@ function App() {
                     element={<SearchPage lang={lang} />}
                   />
 
+                  <Route
+                    path="/campus-radio"
+                    element={<CampusRadio lang={lang} />}
+                  />
                   <Route
                     path="/admin"
                     element={<Login lang={lang} />}
