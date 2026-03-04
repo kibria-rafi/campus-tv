@@ -1,10 +1,22 @@
 import { useState } from 'react';
-import { Award, Target, Eye, Mail, MapPin, Send, CheckCircle, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
+import {
+  Award,
+  Target,
+  Eye,
+  Mail,
+  MapPin,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  ExternalLink,
+} from 'lucide-react';
+import Loader from '../components/ui/Loader';
 import { API_BASE } from '../config/api';
 
 const CONTACT_EMAIL = 'info@campustv.ac';
 const MAPS_LINK = 'https://maps.app.goo.gl/iPgc4mEGBg6peBat7';
-const MAP_EMBED_URL = 'https://www.google.com/maps?q=23.8768956,90.3201592&z=16&output=embed';
+const MAP_EMBED_URL =
+  'https://www.google.com/maps?q=23.8768956,90.3201592&z=16&output=embed';
 
 const SUBJECTS = [
   { value: 'general', label: { bn: 'সাধারণ', en: 'General' } },
@@ -33,7 +45,10 @@ function MapCard({ lang }) {
     <div className="rounded-xl overflow-hidden border border-border bg-muted aspect-video relative">
       {embedFailed ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted p-6 text-center">
-          <MapPin size={40} className="text-brandRed" />
+          <MapPin
+            size={40}
+            className="text-brandRed"
+          />
           <p className="text-sm font-semibold text-foreground">
             {lang === 'bn' ? 'ম্যাপ লোড হয়নি' : 'Map could not load'}
           </p>
@@ -376,20 +391,8 @@ We believe that through news and information dissemination, we can build an educ
                 disabled={isLoading}
                 className="flex items-center justify-center gap-2 bg-brandRed text-white px-5 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2
-                      size={16}
-                      className="animate-spin"
-                    />
-                    {lang === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending…'}
-                  </>
-                ) : (
-                  <>
-                    <Send size={16} />
-                    {lang === 'bn' ? 'বার্তা পাঠান' : 'Send Message'}
-                  </>
-                )}
+                {isLoading ? <Loader size="sm" /> : <Send size={16} />}
+                {lang === 'bn' ? 'বার্তা পাঠান' : 'Send Message'}
               </button>
             </form>
           </div>

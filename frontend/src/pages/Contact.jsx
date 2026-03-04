@@ -6,8 +6,8 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
-  Loader2,
 } from 'lucide-react';
+import Loader from '../components/ui/Loader';
 import { API_BASE } from '../config/api';
 const CONTACT_EMAIL = 'info@campustv.ac';
 const MAPS_LINK = 'https://maps.app.goo.gl/iPgc4mEGBg6peBat7';
@@ -283,20 +283,8 @@ export default function Contact({ lang }) {
               disabled={isLoading}
               className="flex items-center justify-center gap-2 bg-brandRed text-white px-5 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
-                <>
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
-                  {lang === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending…'}
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  {lang === 'bn' ? 'বার্তা পাঠান' : 'Send Message'}
-                </>
-              )}
+              {isLoading ? <Loader size="sm" /> : <Send size={16} />}
+              {lang === 'bn' ? 'বার্তা পাঠান' : 'Send Message'}
             </button>
           </form>
         </div>

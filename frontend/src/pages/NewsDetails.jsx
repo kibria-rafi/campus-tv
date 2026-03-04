@@ -13,13 +13,14 @@ import {
   Share2,
 } from 'lucide-react';
 import { API_BASE } from '../config/api';
+import Loader from '../components/ui/Loader';
 
 const CATEGORY_LABELS = {
-  'Features': { bn: 'ফিচার', en: 'Features' },
-  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
-  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  Features: { bn: 'ফিচার', en: 'Features' },
+  Culture: { bn: 'সংস্কৃতি', en: 'Culture' },
+  Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
-  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
 };
 
 /** Reusable card used in both Related and Latest sidebar sections. */
@@ -125,8 +126,11 @@ export default function NewsDetails({ lang }) {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen font-bold text-brandRed animate-pulse">
-        লোড হচ্ছে...
+      <div className="flex justify-center items-center h-screen">
+        <Loader
+          size="lg"
+          className="text-brandRed"
+        />
       </div>
     );
 

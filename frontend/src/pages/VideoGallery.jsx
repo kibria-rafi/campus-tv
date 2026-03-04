@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PlayCircle, Clock } from 'lucide-react';
 import { API_BASE } from '../config/api';
+import Loader from '../components/ui/Loader';
 
 export default function VideoGallery({ lang }) {
   const [videos, setVideos] = useState([]);
@@ -34,9 +35,10 @@ export default function VideoGallery({ lang }) {
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-center py-20 font-bold animate-pulse text-brandRed">
-          {lang === 'bn' ? 'ভিডিও লোড হচ্ছে...' : 'Loading Videos...'}
-        </div>
+        <Loader
+          size="lg"
+          className="text-brandRed"
+        />
       </div>
     );
 

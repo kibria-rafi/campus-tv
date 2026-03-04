@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiPath } from '../config/api';
+import Loader from './ui/Loader';
 
 /**
  * YouTubeArchivePlayer
@@ -77,8 +78,11 @@ export default function YouTubeArchivePlayer() {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center aspect-video bg-muted rounded-xl text-muted-foreground text-sm p-4">
-        Loading archive videos…
+      <div className="flex items-center justify-center aspect-video bg-muted rounded-xl p-4">
+        <Loader
+          size="md"
+          className="text-brandRed"
+        />
       </div>
     );
   }

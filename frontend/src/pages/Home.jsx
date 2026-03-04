@@ -5,15 +5,22 @@ import LivePlayer from '../components/LivePlayer';
 import VideoSidebar from '../components/VideoSidebar';
 import { translations } from '../data';
 import { API_BASE } from '../config/api';
+import Loader from '../components/ui/Loader';
 
-const CATEGORIES = ['Features', 'Culture', 'Education', 'Amar Campus', 'Opinion'];
+const CATEGORIES = [
+  'Features',
+  'Culture',
+  'Education',
+  'Amar Campus',
+  'Opinion',
+];
 
 const CATEGORY_LABELS = {
-  'Features': { bn: 'ফিচার', en: 'Features' },
-  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
-  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  Features: { bn: 'ফিচার', en: 'Features' },
+  Culture: { bn: 'সংস্কৃতি', en: 'Culture' },
+  Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
-  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
 };
 
 export default function Home({ lang }) {
@@ -60,7 +67,14 @@ export default function Home({ lang }) {
   };
 
   if (loading)
-    return <div className="text-center py-20 font-bold">লোড হচ্ছে...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader
+          size="lg"
+          className="text-brandRed"
+        />
+      </div>
+    );
 
   return (
     <div className="space-y-6">

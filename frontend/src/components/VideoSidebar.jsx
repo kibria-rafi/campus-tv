@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PlayCircle, X, AlertCircle } from 'lucide-react';
 import { API_BASE } from '../config/api';
+import Loader from './ui/Loader';
 
 function VideoModal({ video, onClose }) {
   useEffect(() => {
@@ -69,12 +70,12 @@ export default function VideoSidebar({ lang }) {
         setLoading(true);
         setError(null);
         const res = await fetch(`${API_BASE}/api/videos/youtube?limit=7`);
-        
+
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error || 'Failed to load videos');
         }
-        
+
         const data = await res.json();
         setVideos(data.items || []);
       } catch (err) {
@@ -113,12 +114,10 @@ export default function VideoSidebar({ lang }) {
         {/* Content area */}
         {loading ? (
           <div className="flex-1 flex items-center justify-center py-10">
-            <div className="text-center space-y-2">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brandRed"></div>
-              <p className="text-sm text-muted-foreground">
-                {lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...'}
-              </p>
-            </div>
+            <Loader
+              size="md"
+              className="text-brandRed"
+            />
           </div>
         ) : error ? (
           <div className="flex-1 flex items-center justify-center py-10 px-4">
@@ -134,7 +133,9 @@ export default function VideoSidebar({ lang }) {
         ) : videos.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-10 px-4">
             <p className="text-sm text-muted-foreground text-center">
-              {lang === 'bn' ? 'কোনো ভিডিও পাওয়া যায়নি' : 'No videos available'}
+              {lang === 'bn'
+                ? 'কোনো ভিডিও পাওয়া যায়নি'
+                : 'No videos available'}
             </p>
           </div>
         ) : (

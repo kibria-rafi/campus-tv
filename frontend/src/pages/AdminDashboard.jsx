@@ -10,8 +10,8 @@ import {
   Radio,
   CheckCircle2,
   AlertCircle,
-  Loader2,
 } from 'lucide-react';
+import Loader from '../components/ui/Loader';
 import { API_BASE } from '../config/api';
 
 const CATEGORIES = [
@@ -23,11 +23,11 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_LABELS = {
-  'Features': { bn: 'ফিচার', en: 'Features' },
-  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
-  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  Features: { bn: 'ফিচার', en: 'Features' },
+  Culture: { bn: 'সংস্কৃতি', en: 'Culture' },
+  Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
-  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
 };
 
 const emptyForm = {
@@ -400,7 +400,10 @@ export default function AdminDashboard() {
                     }}
                   >
                     {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
+                      <option
+                        key={cat}
+                        value={cat}
+                      >
                         {CATEGORY_LABELS[cat]?.bn || cat} / {cat}
                       </option>
                     ))}
@@ -593,12 +596,7 @@ export default function AdminDashboard() {
                     onClick={() => handleTestUrl('primary')}
                     className="px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-card border border-border font-bold text-xs uppercase transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
                   >
-                    {testing.primary ? (
-                      <Loader2
-                        size={13}
-                        className="animate-spin"
-                      />
-                    ) : null}
+                    {testing.primary ? <Loader size="sm" /> : null}
                     Test
                   </button>
                 </div>
@@ -644,12 +642,7 @@ export default function AdminDashboard() {
                     onClick={() => handleTestUrl('backup')}
                     className="px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-card border border-border font-bold text-xs uppercase transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
                   >
-                    {testing.backup ? (
-                      <Loader2
-                        size={13}
-                        className="animate-spin"
-                      />
-                    ) : null}
+                    {testing.backup ? <Loader size="sm" /> : null}
                     Test
                   </button>
                 </div>
@@ -702,15 +695,8 @@ export default function AdminDashboard() {
                 disabled={streamSaving}
                 className="w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed disabled:opacity-60"
               >
-                {streamSaving ? (
-                  <Loader2
-                    size={18}
-                    className="animate-spin"
-                  />
-                ) : (
-                  <Radio size={18} />
-                )}
-                {streamSaving ? 'Saving…' : 'Save Stream Settings'}
+                {streamSaving ? <Loader size="sm" /> : <Radio size={18} />}
+                Save Stream Settings
               </button>
             </form>
           </div>
