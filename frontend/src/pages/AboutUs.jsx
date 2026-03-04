@@ -191,7 +191,8 @@ We believe that through news and information dissemination, we can build an educ
   return (
     <div className="min-h-screen">
       {/* About Header */}
-      <div className="bg-red-100 border border-red-400 rounded-2xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 ring-1 ring-red-300/40 dark:bg-red-900/40 dark:border-red-700 dark:ring-red-500/30 text-foreground mb-12">
+      <div className="relative overflow-hidden bg-red-100 border border-red-400 rounded-2xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 ring-1 ring-red-300/40 dark:bg-red-900/40 dark:border-red-700 dark:ring-red-500/30 text-foreground mb-12">
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-400/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-black text-center mb-6 uppercase italic tracking-tight">
             {content.title}
