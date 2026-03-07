@@ -209,7 +209,7 @@ export default function Home({ lang }) {
         {newsList.length > 11 && visibleCount < newsList.length && (
           <div className="flex justify-center mt-8">
             <button
-              onClick={() => setVisibleCount(newsList.length)}
+              onClick={() => setVisibleCount((prev) => prev + 12)}
               className="px-8 py-3 bg-brandRed text-white font-bold rounded-md hover:bg-red-700 transition-all duration-300 hover:shadow-lg transform hover:scale-105 uppercase text-sm"
             >
               {t.seeMore}
