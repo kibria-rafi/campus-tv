@@ -151,7 +151,7 @@
 .animate-scroll {
   display: flex;
   white-space: nowrap;
-  animation: scroll-left 30s linear infinite;
+  animation: scroll-left var(--marquee-duration, 30s) linear infinite;
   will-change: transform;
 }
 
