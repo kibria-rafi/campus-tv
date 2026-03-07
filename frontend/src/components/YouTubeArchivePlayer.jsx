@@ -37,16 +37,21 @@ export default function YouTubeArchivePlayer() {
       const data = await res.json();
       console.log('[YouTubeArchivePlayer] Response:', res.status, data);
 
-      // Be tolerant to backend shape changes.
-      // Accepted shapes:
-      // 1) { videoIds: string[] }  ← what /api/youtube/latest returns
-      // 2) { ids: string[] }
-      // 3) { videos: string[] }
-      // 4) { data: { videoIds: string[] } }
-      // 5) string[]
-      const ids = Array.isArray(data)
-        ? data
-        : data?.videoIds || data?.ids || data?.videos || data?.data?.videoIds;
+      // Extract video IDs from the new API shape: { items: [{ videoId, ... }] }
+      // Also tolerates legacy shapes for backward compatibility.
+      let ids;
+      if (
+        Array.isArray(data?.items) &&
+        data.items.length > 0 &&
+        data.items[0]?.videoId !== undefined
+      ) {
+        ids = data.items.map((item) => item.videoId);
+      } else if (Array.isArray(data)) {
+        ids = data;
+      } else {
+        ids =
+          data?.videoIds || data?.ids || data?.videos || data?.data?.videoIds;
+      }
 
       if (!Array.isArray(ids) || ids.length === 0) {
         throw new Error('Empty playlist (no video IDs returned).');

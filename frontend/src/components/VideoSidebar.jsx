@@ -31,7 +31,7 @@ function VideoModal({ video, onClose }) {
 
         <div className="aspect-video w-full">
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0`}
+            src={`https://www.youtube-nocookie.com/embed/${video.videoId}?autoplay=1&rel=0`}
             title={video.title}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -69,7 +69,7 @@ export default function VideoSidebar({ lang }) {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${API_BASE}/api/videos/youtube?limit=7`);
+        const res = await fetch(`${API_BASE}/api/youtube/latest?limit=7`);
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -141,18 +141,18 @@ export default function VideoSidebar({ lang }) {
         ) : (
           <ul className="overflow-y-auto flex-1 max-h-70 md:max-h-130 divide-y divide-border custom-scrollbar">
             {videos.map((video) => (
-              <li key={video.id}>
+              <li key={video.videoId}>
                 <button
                   onClick={() => handleVideoClick(video)}
                   className="flex gap-3 p-3 hover:bg-muted transition-colors duration-150 group w-full text-left"
                 >
                   <div className="relative w-20 h-14 shrink-0 rounded-md overflow-hidden bg-muted">
                     <img
-                      src={video.thumbnailUrl}
+                      src={video.thumbnail}
                       alt={video.title}
                       className="w-full h-full object-cover group-hover:brightness-90 transition-all duration-200"
                       onError={(e) => {
-                        e.currentTarget.src = `https://i.ytimg.com/vi/${video.id}/default.jpg`;
+                        e.currentTarget.src = `https://i.ytimg.com/vi/${video.videoId}/default.jpg`;
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors duration-200">

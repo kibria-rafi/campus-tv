@@ -47,7 +47,7 @@ function VideoModal({ video, onClose }) {
 
         <div className="aspect-video w-full">
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0`}
+            src={`https://www.youtube-nocookie.com/embed/${video.videoId}?autoplay=1&rel=0`}
             title={video.title}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -82,12 +82,12 @@ function VideoCard({ video, onClick }) {
     >
       <div className="relative aspect-video overflow-hidden bg-muted">
         <img
-          src={video.thumbnailUrl}
+          src={video.thumbnail}
           alt={video.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
-            e.currentTarget.src = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
+            e.currentTarget.src = `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`;
           }}
         />
         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -124,11 +124,11 @@ function FeaturedCard({ video, onClick }) {
       <div className="md:flex">
         <div className="relative md:w-3/5 aspect-video overflow-hidden bg-muted">
           <img
-            src={video.thumbnailUrl}
+            src={video.thumbnail}
             alt={video.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
-              e.currentTarget.src = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
+              e.currentTarget.src = `https://i.ytimg.com/vi/${video.videoId}/mqdefault.jpg`;
             }}
           />
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -182,7 +182,7 @@ export default function VideoArchive({ lang }) {
     setError(null);
     try {
       const res = await fetch(
-        `${API_BASE}/api/videos/youtube?limit=${currentLimit}`
+        `${API_BASE}/api/youtube/latest?limit=${currentLimit}`
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -308,7 +308,7 @@ export default function VideoArchive({ lang }) {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {rest.map((video) => (
                 <VideoCard
-                  key={video.id}
+                  key={video.videoId}
                   video={video}
                   onClick={setActiveVideo}
                 />

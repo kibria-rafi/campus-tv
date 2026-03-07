@@ -3,7 +3,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { XMLParser } = require('fast-xml-parser');
+const youtubeRoutes = require('./routes/youtube');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
@@ -74,11 +74,11 @@ const ALLOWED_CATEGORIES = [
 ];
 
 const CATEGORY_MAP = {
-  'Features': { bn: 'ফিচার', en: 'Features' },
-  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
-  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  Features: { bn: 'ফিচার', en: 'Features' },
+  Culture: { bn: 'সংস্কৃতি', en: 'Culture' },
+  Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
-  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
 };
 
 app.get('/', (_req, res) => {
@@ -125,7 +125,6 @@ const newsSchema = new mongoose.Schema({
 });
 
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
-
 
 // ── Stream Settings ────────────────────────────────────────────────────────
 // Single-document collection that stores the live stream URLs.
@@ -187,18 +186,18 @@ app.get('/api/news', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
     const category = req.query.category; // Filter by category
-    
+
     // Base filter: only plain articles (no videoUrl and not isLive)
     const filter = {
       $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
       isLive: { $ne: true },
     };
-    
+
     // Add category filter if provided
     if (category && ALLOWED_CATEGORIES.includes(category)) {
       filter.categories = category;
     }
-    
+
     let query = News.find(filter).sort({ createdAt: -1 });
 
     if (limit && limit > 0) {
@@ -362,181 +361,7 @@ app.get('/api/live/viewers', async (_req, res) => {
   res.json({ count: sockets.size });
 });
 
-// Simple in-memory cache with 5-minute TTL.
-const YOUTUBE_CHANNEL_ID =
-  process.env.YOUTUBE_CHANNEL_ID || 'UCTSpN9ivGWfXz9vVXMUjVcw';
-
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-let ytCache = { videoIds: null, items: null, timestamp: 0 };
-
-/** Fetch + parse the YouTube RSS feed and return an array of item objects.
- *  Strategy:
- *   1. Try direct YouTube RSS feed.
- *   2. On failure (non-200, HTML response, or parse error) fall back to OpenRSS proxy.
- *   3. If both fail, serve stale cache when available; otherwise throw.
- */
-async function fetchYouTubeRSS() {
-  const directUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
-  const fallbackUrl = `https://openrss.org/youtube/channel/${YOUTUBE_CHANNEL_ID}`;
-
-  const headers = {
-    'User-Agent':
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    Accept: 'application/xml,text/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9',
-  };
-
-  /** Parse an XML string into an item array, or return null on failure. */
-  function parseXML(xmlText) {
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: '@_',
-    });
-    const parsed = parser.parse(xmlText);
-    const entries = parsed?.feed?.entry ?? [];
-    const entryArray = Array.isArray(entries) ? entries : [entries];
-    if (!entryArray.length) return null;
-
-    const items = entryArray
-      .map((e) => {
-        const id = e['yt:videoId'];
-        if (!id) return null;
-        return {
-          id,
-          title: e.title ?? '',
-          publishedAt: e.published ?? null,
-          watchUrl: `https://www.youtube.com/watch?v=${id}`,
-          thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-        };
-      })
-      .filter(Boolean);
-
-    return items.length ? items : null;
-  }
-
-  /** Fetch a URL, ensure it returns XML (not HTML), parse and return items. */
-  async function fetchAndParse(url) {
-    const response = await fetch(url, { headers });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const contentType = response.headers.get('content-type') ?? '';
-    if (contentType.includes('text/html')) {
-      throw new Error(
-        `Received HTML instead of XML (content-type: ${contentType})`
-      );
-    }
-
-    const xmlText = await response.text();
-    const items = parseXML(xmlText);
-    if (!items) throw new Error('No videos found in RSS feed');
-    return items;
-  }
-
-  const maxAttempts = 3;
-  let primaryError = null;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fetchAndParse(directUrl);
-    } catch (err) {
-      primaryError = err;
-      const statusMatch = String(err.message).match(/HTTP (\d+)/);
-      const status = statusMatch ? parseInt(statusMatch[1], 10) : 0;
-      if (status >= 500 && status <= 599 && attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, 300 * attempt));
-        continue;
-      }
-      break;
-    }
-  }
-
-  console.warn(
-    `[YouTube] Primary RSS failed: ${primaryError?.message}. Trying OpenRSS fallback.`
-  );
-
-  // Fallback: OpenRSS proxy
-  try {
-    const items = await fetchAndParse(fallbackUrl);
-    console.log('[YouTube] OpenRSS fallback succeeded.');
-    return items;
-  } catch (fallbackErr) {
-    console.warn(`[YouTube] OpenRSS fallback failed: ${fallbackErr?.message}.`);
-  }
-
-  // Last resort: serve stale cache if available.
-  if (ytCache.items && ytCache.items.length) {
-    console.warn('[YouTube] Both sources failed. Serving stale cache.');
-    return ytCache.items;
-  }
-
-  throw new Error(
-    `YouTube RSS unavailable. Primary error: ${primaryError?.message}`
-  );
-}
-
-// Legacy: returns video ID array only. Prefer /api/videos/youtube for new callers.
-app.get('/api/youtube/latest', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
-    const now = Date.now();
-    console.log(
-      `[YouTube] GET /api/youtube/latest?limit=${limit} — from origin: ${req.headers.origin || 'n/a'}`
-    );
-
-    if (ytCache.videoIds && now - ytCache.timestamp < CACHE_TTL_MS) {
-      console.log(
-        '[YouTube] Returning cached result, count:',
-        ytCache.videoIds.length
-      );
-      return res.json({ videoIds: ytCache.videoIds.slice(0, limit) });
-    }
-
-    const items = await fetchYouTubeRSS();
-    const videoIds = items.map((i) => i.id);
-    ytCache = { videoIds, items, timestamp: now };
-    console.log('[YouTube] Fetched fresh RSS, count:', videoIds.length);
-
-    return res.json({ videoIds: videoIds.slice(0, limit) });
-  } catch (err) {
-    console.error('[YouTube] RSS fetch error:', err);
-    res
-      .status(502)
-      .json({ error: 'Failed to fetch YouTube archive', details: err.message });
-  }
-});
-
-app.get('/api/videos/youtube', async (req, res) => {
-  try {
-    const limit = Math.min(parseInt(req.query.limit) || 12, 50);
-    const now = Date.now();
-
-    if (ytCache.items && now - ytCache.timestamp < CACHE_TTL_MS) {
-      return res.json({
-        source: 'youtube-rss',
-        channelId: YOUTUBE_CHANNEL_ID,
-        items: ytCache.items.slice(0, limit),
-      });
-    }
-
-    const items = await fetchYouTubeRSS();
-    const videoIds = items.map((i) => i.id);
-    ytCache = { videoIds, items, timestamp: now };
-
-    return res.json({
-      source: 'youtube-rss',
-      channelId: YOUTUBE_CHANNEL_ID,
-      items: items.slice(0, limit),
-    });
-  } catch (err) {
-    console.error('[YouTube] RSS fetch error:', err);
-    res
-      .status(502)
-      .json({ error: 'Failed to fetch YouTube archive', details: err.message });
-  }
-});
+app.use('/api/youtube', youtubeRoutes);
 
 app.post('/api/contact', (req, res) => {
   const { name, email, subject, message, company } = req.body;
