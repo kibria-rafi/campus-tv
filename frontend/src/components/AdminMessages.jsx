@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Trash2,
   Mail,
@@ -27,6 +28,7 @@ export default function AdminMessages({ onUnreadRefresh }) {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null); // { type: 'success'|'error', text }
   const [expandedId, setExpandedId] = useState(null);
+  const navigate = useNavigate();
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -37,8 +39,14 @@ export default function AdminMessages({ onUnreadRefresh }) {
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
+      } else if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('adminToken');
+        navigate('/admin');
       } else {
-        setNotice({ type: 'error', text: 'Failed to load messages.' });
+        setNotice({
+          type: 'error',
+          text: `Failed to load messages (HTTP ${res.status}).`,
+        });
       }
     } catch {
       setNotice({
@@ -48,7 +56,7 @@ export default function AdminMessages({ onUnreadRefresh }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchMessages();
