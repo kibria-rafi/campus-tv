@@ -173,6 +173,7 @@ export default function AdminDashboard() {
   const [testResult, setTestResult] = useState({ primary: null, backup: null });
   const [testing, setTesting] = useState({ primary: false, backup: false });
   const [validationError, setValidationError] = useState(null);
+  const [publishMsg, setPublishMsg] = useState(null); // { type: 'success'|'error', text }
 
   // Change-password form state
   const [pwForm, setPwForm] = useState({
@@ -314,6 +315,7 @@ export default function AdminDashboard() {
     setEditingId(null);
     setNews(emptyForm);
     setValidationError(null);
+    setPublishMsg(null);
   };
 
   const isRichEmpty = (html) => {
@@ -383,15 +385,19 @@ export default function AdminDashboard() {
       });
 
       if (res.ok) {
-        alert('সফলভাবে পাবলিশ হয়েছে!');
+        setPublishMsg({ type: 'success', text: 'সফলভাবে পাবলিশ হয়েছে!' });
+        setTimeout(() => setPublishMsg(null), 4000);
         cancelEdit();
         fetchNews();
       } else {
         const errData = await res.json();
-        alert('Error: ' + (errData.error || 'পাবলিশ করতে সমস্যা হয়েছে'));
+        setPublishMsg({
+          type: 'error',
+          text: errData.error || 'পাবলিশ করতে সমস্যা হয়েছে',
+        });
       }
     } catch (err) {
-      alert('সার্ভার কানেকশনে সমস্যা!');
+      setPublishMsg({ type: 'error', text: 'সার্ভার কানেকশনে সমস্যা!' });
     }
   };
 
@@ -664,6 +670,28 @@ export default function AdminDashboard() {
                       className="mt-0.5 shrink-0"
                     />
                     {validationError}
+                  </div>
+                )}
+                {publishMsg && (
+                  <div
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold ${
+                      publishMsg.type === 'success'
+                        ? 'bg-green-500/10 border border-green-500/30 text-green-600'
+                        : 'bg-red-500/10 border border-red-500/30 text-red-500'
+                    }`}
+                  >
+                    {publishMsg.type === 'success' ? (
+                      <CheckCircle2
+                        size={16}
+                        className="shrink-0"
+                      />
+                    ) : (
+                      <AlertCircle
+                        size={16}
+                        className="shrink-0"
+                      />
+                    )}
+                    {publishMsg.text}
                   </div>
                 )}
                 <button
