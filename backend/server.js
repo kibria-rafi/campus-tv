@@ -5,6 +5,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const youtubeRoutes = require('./routes/youtube');
+const ContactMessage = require('./models/ContactMessage');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
@@ -60,7 +61,7 @@ app.use(
       return cb(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 );
 app.use(express.json());
@@ -239,12 +240,10 @@ app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
       ? await AdminCredentials.findOne({ username })
       : await AdminCredentials.findOne({});
     if (!admin) {
-      return res
-        .status(404)
-        .json({
-          error:
-            'Admin account not found. Please restart the server so the admin account can be seeded.',
-        });
+      return res.status(404).json({
+        error:
+          'Admin account not found. Please restart the server so the admin account can be seeded.',
+      });
     }
 
     const match = await bcrypt.compare(currentPassword, admin.passwordHash);
@@ -505,7 +504,7 @@ app.get('/api/live/viewers', async (_req, res) => {
 
 app.use('/api/youtube', youtubeRoutes);
 
-app.post('/api/contact', (req, res) => {
+app.post('/api/contact', async (req, res) => {
   const { name, email, subject, message, company } = req.body;
 
   // Honeypot check — bots fill hidden fields; silently succeed
@@ -530,16 +529,73 @@ app.post('/api/contact', (req, res) => {
       .json({ error: 'Message must be under 2000 characters.' });
   }
 
-  // Log submission (replace with nodemailer / DB save as needed)
-  console.log('📬 Contact form submission:', {
-    name: name.trim(),
-    email: email.trim(),
-    subject: subject || 'General',
-    message: message.trim(),
-    receivedAt: new Date().toISOString(),
-  });
+  try {
+    await ContactMessage.create({
+      name: name.trim(),
+      email: email.trim(),
+      subject: subject?.trim() || 'General',
+      message: message.trim(),
+    });
+  } catch (err) {
+    console.error('[Contact] Save error:', err);
+    return res
+      .status(500)
+      .json({ error: 'Failed to save message. Please try again.' });
+  }
 
   return res.json({ success: true, message: 'Message received.' });
+});
+
+// ── Contact Messages Admin routes ─────────────────────────────────────────
+
+// GET all messages, newest first
+app.get('/api/admin/messages', requireAdmin, async (_req, res) => {
+  try {
+    const messages = await ContactMessage.find().sort({ createdAt: -1 });
+    return res.json(messages);
+  } catch (err) {
+    console.error('[Messages] GET error:', err);
+    return res.status(500).json({ error: 'Failed to fetch messages.' });
+  }
+});
+
+// GET unread count — must be declared before /:id to avoid param collision
+app.get('/api/admin/messages/unread-count', requireAdmin, async (_req, res) => {
+  try {
+    const count = await ContactMessage.countDocuments({ isRead: false });
+    return res.json({ count });
+  } catch (err) {
+    console.error('[Messages] Unread count error:', err);
+    return res.status(500).json({ error: 'Failed to fetch unread count.' });
+  }
+});
+
+// PATCH mark a message as read
+app.patch('/api/admin/messages/:id/read', requireAdmin, async (req, res) => {
+  try {
+    const updated = await ContactMessage.findByIdAndUpdate(
+      req.params.id,
+      { isRead: true },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Message not found.' });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[Messages] Mark read error:', err);
+    return res.status(500).json({ error: 'Failed to mark message as read.' });
+  }
+});
+
+// DELETE a message
+app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    const deleted = await ContactMessage.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Message not found.' });
+    return res.json({ success: true, message: 'Message deleted.' });
+  } catch (err) {
+    console.error('[Messages] DELETE error:', err);
+    return res.status(500).json({ error: 'Failed to delete message.' });
+  }
 });
 
 // ── Stream Settings routes ─────────────────────────────────────────────────

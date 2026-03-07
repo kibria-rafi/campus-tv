@@ -11,8 +11,10 @@ import {
   CheckCircle2,
   AlertCircle,
   KeyRound,
+  Inbox,
 } from 'lucide-react';
 import Loader from '../components/ui/Loader';
+import AdminMessages from '../components/AdminMessages';
 import { API_BASE } from '../config/api';
 
 function ToolBtn({ onClick, title, children }) {
@@ -161,7 +163,8 @@ export default function AdminDashboard() {
   const [news, setNews] = useState(emptyForm);
   const [allNews, setAllNews] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [activeTab, setActiveTab] = useState('news'); // 'news' | 'stream'
+  const [activeTab, setActiveTab] = useState('news'); // 'news' | 'stream' | 'security' | 'messages'
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Stream Settings tab state
   const [streamForm, setStreamForm] = useState({
@@ -186,11 +189,30 @@ export default function AdminDashboard() {
 
   const navigate = useNavigate();
 
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+      const res = await fetch(`${API_BASE}/api/admin/messages/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.count ?? 0);
+      }
+    } catch {
+      // silent — badge stays at last known value
+    }
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) navigate('/admin');
     fetchNews();
-  }, [navigate]);
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 45_000);
+    return () => clearInterval(interval);
+  }, [navigate, fetchUnreadCount]);
 
   const fetchStreamSettings = useCallback(async () => {
     try {
@@ -305,6 +327,7 @@ export default function AdminDashboard() {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === 'stream') fetchStreamSettings();
+    if (tab === 'messages') fetchUnreadCount();
     if (tab !== 'security') {
       setPwMsg(null);
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -448,6 +471,27 @@ export default function AdminDashboard() {
           }`}
         >
           <KeyRound size={18} /> Security
+        </button>
+        <button
+          onClick={() => handleTabChange('messages')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${
+            activeTab === 'messages'
+              ? 'bg-brandRed text-white shadow-lg'
+              : 'bg-muted text-muted-foreground hover:bg-card'
+          }`}
+        >
+          <Inbox size={18} /> Inbox
+          {unreadCount > 0 && (
+            <span
+              className={`flex items-center justify-center min-w-5 h-5 px-1 text-[11px] font-black rounded-full leading-none ${
+                activeTab === 'messages'
+                  ? 'bg-white text-brandRed'
+                  : 'bg-brandRed text-white'
+              }`}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -926,6 +970,10 @@ export default function AdminDashboard() {
             </form>
           </div>
         </div>
+      )}
+
+      {activeTab === 'messages' && (
+        <AdminMessages onUnreadRefresh={fetchUnreadCount} />
       )}
 
       {activeTab === 'security' && (
