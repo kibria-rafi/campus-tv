@@ -3,6 +3,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const youtubeRoutes = require('./routes/youtube');
 const { Server } = require('socket.io');
 require('dotenv').config();
@@ -126,6 +127,17 @@ const newsSchema = new mongoose.Schema({
 
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
 
+// ── Admin Credentials ─────────────────────────────────────────────────────
+// Stores the single admin account with a bcrypt-hashed password.
+const adminCredentialsSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
+});
+
+const AdminCredentials =
+  mongoose.models.AdminCredentials ||
+  mongoose.model('AdminCredentials', adminCredentialsSchema);
+
 // ── Stream Settings ────────────────────────────────────────────────────────
 // Single-document collection that stores the live stream URLs.
 const streamSettingsSchema = new mongoose.Schema({
@@ -168,18 +180,96 @@ function isValidStreamUrl(url) {
   }
 }
 
-app.post('/api/admin/login', (req, res) => {
-  const { username, password } = req.body;
-  if (
-    username === process.env.ADMIN_USER &&
-    password === process.env.ADMIN_PASS
-  ) {
-    const token = jwt.sign({ role: 'admin' }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
-    });
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username and password are required.',
+      });
+    }
+
+    const admin = await AdminCredentials.findOne({ username });
+    if (!admin) {
+      return res
+        .status(401)
+        .json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const match = await bcrypt.compare(password, admin.passwordHash);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { role: 'admin', username },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '1d',
+      }
+    );
     return res.json({ success: true, token });
+  } catch (err) {
+    console.error('[Login] Error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-  res.status(401).json({ success: false, message: 'Invalid credentials' });
+});
+
+app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res
+        .status(400)
+        .json({ error: 'New password must be at least 8 characters.' });
+    }
+
+    const username = req.admin.username;
+    // Single-admin setup: look up by username when available, otherwise
+    // fall back to the only document in the collection so that tokens
+    // issued before the username field was added to the JWT still work.
+    const admin = username
+      ? await AdminCredentials.findOne({ username })
+      : await AdminCredentials.findOne({});
+    if (!admin) {
+      return res
+        .status(404)
+        .json({
+          error:
+            'Admin account not found. Please restart the server so the admin account can be seeded.',
+        });
+    }
+
+    const match = await bcrypt.compare(currentPassword, admin.passwordHash);
+    if (!match) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    const sameAsOld = await bcrypt.compare(newPassword, admin.passwordHash);
+    if (sameAsOld) {
+      return res
+        .status(400)
+        .json({ error: 'New password must differ from the current password.' });
+    }
+
+    admin.passwordHash = await bcrypt.hash(newPassword, 12);
+    await admin.save();
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully.',
+    });
+  } catch (err) {
+    console.error('[ChangePassword] Error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.get('/api/news', async (req, res) => {
@@ -549,6 +639,28 @@ const startServer = async () => {
       console.log(
         `[Migration] Backfilled categories:[] on ${migrated.modifiedCount} news document(s).`
       );
+    }
+
+    // Seed admin account from env vars if no admin doc exists yet.
+    // This runs once on first deploy; after that, use change-password to update.
+    const existingAdmin = await AdminCredentials.findOne({
+      username: process.env.ADMIN_USER,
+    });
+    if (!existingAdmin) {
+      if (!process.env.ADMIN_USER || !process.env.ADMIN_PASS) {
+        console.warn(
+          '[Auth] ADMIN_USER or ADMIN_PASS env vars are missing — cannot seed admin account.'
+        );
+      } else {
+        const hash = await bcrypt.hash(process.env.ADMIN_PASS, 12);
+        await AdminCredentials.create({
+          username: process.env.ADMIN_USER,
+          passwordHash: hash,
+        });
+        console.log(
+          `[Auth] Admin account seeded for user "${process.env.ADMIN_USER}".`
+        );
+      }
     }
 
     const PORT = process.env.PORT || 5001;

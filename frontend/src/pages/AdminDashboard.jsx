@@ -10,6 +10,7 @@ import {
   Radio,
   CheckCircle2,
   AlertCircle,
+  KeyRound,
 } from 'lucide-react';
 import Loader from '../components/ui/Loader';
 import { API_BASE } from '../config/api';
@@ -173,6 +174,15 @@ export default function AdminDashboard() {
   const [testing, setTesting] = useState({ primary: false, backup: false });
   const [validationError, setValidationError] = useState(null);
 
+  // Change-password form state
+  const [pwForm, setPwForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [pwMsg, setPwMsg] = useState(null); // { type: 'success'|'error', text }
+  const [pwSubmitting, setPwSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -294,6 +304,10 @@ export default function AdminDashboard() {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === 'stream') fetchStreamSettings();
+    if (tab !== 'security') {
+      setPwMsg(null);
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    }
   };
 
   const cancelEdit = () => {
@@ -418,6 +432,16 @@ export default function AdminDashboard() {
           }`}
         >
           <Radio size={18} /> Stream Control
+        </button>
+        <button
+          onClick={() => handleTabChange('security')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all ${
+            activeTab === 'security'
+              ? 'bg-brandRed text-white shadow-lg'
+              : 'bg-muted text-muted-foreground hover:bg-card'
+          }`}
+        >
+          <KeyRound size={18} /> Security
         </button>
       </div>
 
@@ -870,6 +894,192 @@ export default function AdminDashboard() {
               >
                 {streamSaving ? <Loader size="sm" /> : <Radio size={18} />}
                 Save Stream Settings
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'security' && (
+        <div className="max-w-lg mx-auto">
+          <div className="bg-card shadow-xl rounded-2xl border border-border overflow-hidden">
+            <div className="p-4 text-white flex items-center gap-2 font-bold uppercase italic bg-brandBlack">
+              <KeyRound size={20} />
+              <span>Change Password</span>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setPwMsg(null);
+
+                const { currentPassword, newPassword, confirmPassword } =
+                  pwForm;
+
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                  setPwMsg({
+                    type: 'error',
+                    text: 'All three fields are required.',
+                  });
+                  return;
+                }
+                if (newPassword.length < 8) {
+                  setPwMsg({
+                    type: 'error',
+                    text: 'New password must be at least 8 characters.',
+                  });
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  setPwMsg({
+                    type: 'error',
+                    text: 'New password and confirm password do not match.',
+                  });
+                  return;
+                }
+                if (newPassword === currentPassword) {
+                  setPwMsg({
+                    type: 'error',
+                    text: 'New password must differ from the current password.',
+                  });
+                  return;
+                }
+
+                setPwSubmitting(true);
+                try {
+                  const token = localStorage.getItem('adminToken');
+                  let res;
+                  try {
+                    res = await fetch(`${API_BASE}/api/admin/change-password`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ currentPassword, newPassword }),
+                    });
+                  } catch {
+                    setPwMsg({
+                      type: 'error',
+                      text: 'Network error — could not reach the server.',
+                    });
+                    return;
+                  }
+
+                  let data = {};
+                  try {
+                    data = await res.json();
+                  } catch {
+                    // non-JSON body (e.g. HTML error page)
+                  }
+
+                  if (res.ok) {
+                    setPwMsg({
+                      type: 'success',
+                      text: 'Password updated successfully!',
+                    });
+                    setPwForm({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: '',
+                    });
+                  } else {
+                    setPwMsg({
+                      type: 'error',
+                      text:
+                        data.error || `Request failed (HTTP ${res.status}).`,
+                    });
+                  }
+                } finally {
+                  setPwSubmitting(false);
+                }
+              }}
+              className="p-8 space-y-6"
+            >
+              <div className="space-y-2">
+                <label className="text-sm font-bold uppercase text-foreground tracking-wide">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Enter current password"
+                  className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
+                  value={pwForm.currentPassword}
+                  onChange={(e) =>
+                    setPwForm((f) => ({
+                      ...f,
+                      currentPassword: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold uppercase text-foreground tracking-wide">
+                  New Password
+                  <span className="ml-2 text-xs font-normal normal-case text-muted-foreground">
+                    (min 8 characters)
+                  </span>
+                </label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Enter new password"
+                  className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
+                  value={pwForm.newPassword}
+                  onChange={(e) =>
+                    setPwForm((f) => ({ ...f, newPassword: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold uppercase text-foreground tracking-wide">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Repeat new password"
+                  className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
+                  value={pwForm.confirmPassword}
+                  onChange={(e) =>
+                    setPwForm((f) => ({
+                      ...f,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+
+              {pwMsg && (
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg text-sm font-semibold ${
+                    pwMsg.type === 'success'
+                      ? 'bg-green-500/10 text-green-500 border border-green-500/30'
+                      : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                  }`}
+                >
+                  {pwMsg.type === 'success' ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <AlertCircle size={16} />
+                  )}
+                  {pwMsg.text}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={pwSubmitting}
+                className="w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed disabled:opacity-60"
+              >
+                {pwSubmitting ? <Loader size="sm" /> : <KeyRound size={18} />}
+                Update Password
               </button>
             </form>
           </div>
