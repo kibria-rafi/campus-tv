@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LogOut,
@@ -13,6 +13,112 @@ import {
 } from 'lucide-react';
 import Loader from '../components/ui/Loader';
 import { API_BASE } from '../config/api';
+
+function ToolBtn({ onClick, title, children }) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => {
+        e.preventDefault(); // keep editor focus
+        onClick();
+      }}
+      title={title}
+      className="px-2 py-1 text-xs font-bold rounded hover:bg-card border border-transparent hover:border-border text-foreground transition-all select-none"
+    >
+      {children}
+    </button>
+  );
+}
+
+function BnEditor({ initialValue = '', onChange }) {
+  const editorRef = useRef(null);
+
+  // Populate once on mount; key prop on parent handles re-init when editing id changes
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = initialValue;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const exec = (cmd, value = null) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, value);
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  };
+
+  const handleLink = () => {
+    const url = window.prompt('লিঙ্ক লিখুন (URL):');
+    if (url && url.trim()) exec('createLink', url.trim());
+  };
+
+  return (
+    <div className="border-2 border-border rounded-xl overflow-hidden focus-within:border-brandRed transition-colors">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-border bg-muted">
+        <ToolBtn
+          onClick={() => exec('bold')}
+          title="Bold"
+        >
+          <b>B</b>
+        </ToolBtn>
+        <ToolBtn
+          onClick={() => exec('italic')}
+          title="Italic"
+        >
+          <i>I</i>
+        </ToolBtn>
+        <ToolBtn
+          onClick={() => exec('underline')}
+          title="Underline"
+        >
+          <u>U</u>
+        </ToolBtn>
+        <span className="w-px h-4 bg-border mx-1 inline-block" />
+        <ToolBtn
+          onClick={() => exec('insertUnorderedList')}
+          title="Bullet list"
+        >
+          • List
+        </ToolBtn>
+        <ToolBtn
+          onClick={() => exec('insertOrderedList')}
+          title="Numbered list"
+        >
+          1. List
+        </ToolBtn>
+        <span className="w-px h-4 bg-border mx-1 inline-block" />
+        <ToolBtn
+          onClick={() => exec('formatBlock', 'blockquote')}
+          title="Blockquote"
+        >
+          ❝
+        </ToolBtn>
+        <ToolBtn
+          onClick={handleLink}
+          title="Insert link"
+        >
+          Link
+        </ToolBtn>
+        <span className="w-px h-4 bg-border mx-1 inline-block" />
+        <ToolBtn
+          onClick={() => exec('removeFormat')}
+          title="Clear formatting"
+        >
+          Clear
+        </ToolBtn>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={(e) => onChange(e.currentTarget.innerHTML)}
+        data-placeholder="বিস্তারিত বর্ণনা লিখুন..."
+        className="bn-editor-area min-h-[180px] p-4 outline-none text-foreground bg-background leading-relaxed"
+        style={{ fontFamily: "'SolaimanLipi', sans-serif" }}
+      />
+    </div>
+  );
+}
 
 const CATEGORIES = [
   'Features',
@@ -190,13 +296,24 @@ export default function AdminDashboard() {
     setNews(emptyForm);
   };
 
+  const isQuillEmpty = (html) => {
+    if (!html) return true;
+    const stripped = html.replace(/<[^>]*>/g, '').trim();
+    return stripped === '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isQuillEmpty(news.descBn)) {
+      alert('বাংলা বিস্তারিত বর্ণনা প্রয়োজন।');
+      return;
+    }
+
     const payload = {
-      title: { bn: news.titleBn, en: news.titleEn },
+      title: { bn: news.titleBn, en: news.titleEn || '' },
       subtitle: { bn: news.subtitleBn || '', en: news.subtitleEn || '' },
-      description: { bn: news.descBn, en: news.descEn || news.descBn },
+      description: { bn: news.descBn, en: news.descEn || '' },
       image: news.image,
       secondaryImage: news.secondaryImage || '',
       imageCaption: news.imageCaption || '',
@@ -304,13 +421,12 @@ export default function AdminDashboard() {
                   />
                   <input
                     type="text"
-                    placeholder="Headline (English)"
+                    placeholder="Headline (English) — optional"
                     className="w-full border-b-2 border-border bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none focus:border-brandRed font-bold text-lg"
                     value={news.titleEn}
                     onChange={(e) =>
                       setNews({ ...news, titleEn: e.target.value })
                     }
-                    required
                   />
                 </div>
 
@@ -450,17 +566,21 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase text-muted-foreground mb-2">
+                      বিস্তারিত বর্ণনা (বাংলা){' '}
+                      <span className="text-brandRed">*</span>
+                    </p>
+                    <BnEditor
+                      key={editingId || 'new'}
+                      initialValue={news.descBn}
+                      onChange={(val) =>
+                        setNews((prev) => ({ ...prev, descBn: val }))
+                      }
+                    />
+                  </div>
                   <textarea
-                    placeholder="বিস্তারিত বর্ণনা (বাংলা)..."
-                    className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-4 rounded-xl h-32 outline-none focus:border-brandRed"
-                    value={news.descBn}
-                    onChange={(e) =>
-                      setNews({ ...news, descBn: e.target.value })
-                    }
-                    required
-                  />
-                  <textarea
-                    placeholder="Description (English)..."
+                    placeholder="Description (English) — optional"
                     className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-4 rounded-xl h-32 outline-none focus:border-brandRed"
                     value={news.descEn}
                     onChange={(e) =>
@@ -533,7 +653,7 @@ export default function AdminDashboard() {
                         });
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full border border-blue-100"
+                      className="text-blue-500 p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full border border-blue-100"
                     >
                       <Edit3 size={14} />
                     </button>

@@ -92,7 +92,7 @@ app.get('/health', (_req, res) => {
 const newsSchema = new mongoose.Schema({
   title: {
     bn: { type: String, required: true },
-    en: { type: String, required: true },
+    en: { type: String, default: '' },
   },
   subtitle: {
     bn: { type: String, default: '' },
@@ -100,7 +100,7 @@ const newsSchema = new mongoose.Schema({
   },
   description: {
     bn: { type: String, required: true },
-    en: { type: String, required: true },
+    en: { type: String, default: '' },
   },
   image: String,
   secondaryImage: { type: String, default: '' },

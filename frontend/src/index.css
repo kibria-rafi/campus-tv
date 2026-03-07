@@ -158,3 +158,29 @@
 .animate-scroll:hover {
   animation-play-state: paused;
 }
+
+/* ── Bengali article body editor — admin panel ──────────────────────────── */
+.bn-editor-area:empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  display: block;
+}
+.bn-editor-area blockquote {
+  border-left: 3px solid #ed1c24;
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+  color: hsl(var(--muted-foreground));
+}
+.bn-editor-area ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.bn-editor-area ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.bn-editor-area a {
+  color: #ed1c24;
+  text-decoration: underline;
+}
