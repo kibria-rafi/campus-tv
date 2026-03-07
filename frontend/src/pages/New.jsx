@@ -3,16 +3,56 @@ import { Link } from 'react-router-dom';
 import { Calendar, Newspaper } from 'lucide-react';
 import { API_BASE } from '../config/api';
 import { translations } from '../data';
+import { pickLang } from '../utils/lang';
 
-const CATEGORIES = ['Features', 'Culture', 'Education', 'Amar Campus', 'Opinion'];
+const CATEGORIES = [
+  'Features',
+  'Culture',
+  'Education',
+  'Amar Campus',
+  'Opinion',
+];
 
 const CATEGORY_LABELS = {
-  'Features': { bn: 'ফিচার', en: 'Features' },
-  'Culture': { bn: 'সংস্কৃতি', en: 'Culture' },
-  'Education': { bn: 'শিক্ষা', en: 'Education' },
+  Features: { bn: 'ফিচার', en: 'Features' },
+  Culture: { bn: 'সংস্কৃতি', en: 'Culture' },
+  Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
-  'Opinion': { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
 };
+
+function NewsCardSkeleton() {
+  return (
+    <div className="group flex flex-col overflow-hidden rounded-lg shadow-md bg-card border border-border animate-pulse">
+      <div className="w-full h-48 bg-muted"></div>
+      <div className="p-4 flex flex-col gap-2">
+        <div className="h-4 bg-muted rounded w-1/4"></div>
+        <div className="h-5 bg-muted rounded w-full"></div>
+        <div className="h-4 bg-muted rounded w-3/4"></div>
+        <div className="h-3 bg-muted rounded w-1/3 mt-2"></div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ lang }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+      <Newspaper
+        size={80}
+        className="text-muted-foreground mb-4 opacity-50"
+      />
+      <h2 className="text-2xl font-bold text-foreground mb-2">
+        {lang === 'bn' ? 'কোনো খবর পাওয়া যায়নি' : 'No News Found'}
+      </h2>
+      <p className="text-muted-foreground">
+        {lang === 'bn'
+          ? 'এই মুহূর্তে কোনো সংবাদ উপলব্ধ নেই।'
+          : 'There are no news articles available at the moment.'}
+      </p>
+    </div>
+  );
+}
 
 export default function New({ lang }) {
   const [newsList, setNewsList] = useState([]);
@@ -21,10 +61,6 @@ export default function New({ lang }) {
   const [limit, setLimit] = useState(9);
   const [selectedCategory, setSelectedCategory] = useState(null); // null = all categories
   const t = translations[lang];
-
-  useEffect(() => {
-    fetchNews();
-  }, []);
 
   const fetchNews = async () => {
     try {
@@ -39,6 +75,10 @@ export default function New({ lang }) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
   const handleCategoryClick = (category) => {
     if (selectedCategory === category) {
@@ -73,35 +113,6 @@ export default function New({ lang }) {
       year: 'numeric',
     });
   };
-
-  const NewsCardSkeleton = () => (
-    <div className="group flex flex-col overflow-hidden rounded-lg shadow-md bg-card border border-border animate-pulse">
-      <div className="w-full h-48 bg-muted"></div>
-      <div className="p-4 flex flex-col gap-2">
-        <div className="h-4 bg-muted rounded w-1/4"></div>
-        <div className="h-5 bg-muted rounded w-full"></div>
-        <div className="h-4 bg-muted rounded w-3/4"></div>
-        <div className="h-3 bg-muted rounded w-1/3 mt-2"></div>
-      </div>
-    </div>
-  );
-
-  const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-      <Newspaper
-        size={80}
-        className="text-muted-foreground mb-4 opacity-50"
-      />
-      <h2 className="text-2xl font-bold text-foreground mb-2">
-        {lang === 'bn' ? 'কোনো খবর পাওয়া যায়নি' : 'No News Found'}
-      </h2>
-      <p className="text-muted-foreground">
-        {lang === 'bn'
-          ? 'এই মুহূর্তে কোনো সংবাদ উপলব্ধ নেই।'
-          : 'There are no news articles available at the moment.'}
-      </p>
-    </div>
-  );
 
   return (
     <div className="space-y-6">
@@ -159,7 +170,7 @@ export default function New({ lang }) {
           ))}
         </div>
       ) : newsList.length === 0 ? (
-        <EmptyState />
+        <EmptyState lang={lang} />
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,28 +184,26 @@ export default function New({ lang }) {
                   <img
                     src={news.image || '/logo.png'}
                     className="w-full h-48 object-cover group-hover:brightness-90 group-hover:scale-110 transition duration-500"
-                    alt={news.title[lang]}
+                    alt={pickLang(news.title, lang)}
                     onError={handleImageError}
                   />
                   {news.category && (
                     <span className="absolute top-3 left-3 bg-brandRed text-white px-3 py-1 text-xs font-bold uppercase rounded-full shadow-lg">
-                      {news.category[lang]}
+                      {pickLang(news.category, lang)}
                     </span>
                   )}
                 </div>
 
                 <div className="p-4 flex flex-col flex-1">
                   <h3 className="font-bold text-base leading-snug line-clamp-2 text-foreground group-hover:text-brandRed transition-colors duration-200 mb-2">
-                    {news.title[lang]}
+                    {pickLang(news.title, lang)}
                   </h3>
 
-                  {news.subtitle &&
-                    news.subtitle[lang] &&
-                    news.subtitle[lang].trim() !== '' && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3 italic">
-                        {news.subtitle[lang]}
-                      </p>
-                    )}
+                  {pickLang(news.subtitle, lang) && (
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3 italic">
+                      {pickLang(news.subtitle, lang)}
+                    </p>
+                  )}
 
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-auto pt-2 border-t border-border">
                     <Calendar

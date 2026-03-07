@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 import Loader from '../components/ui/Loader';
+import { pickLang, stripHtml } from '../utils/lang';
 
 const CATEGORY_LABELS = {
   Features: { bn: 'ফিচার', en: 'Features' },
@@ -39,7 +40,7 @@ function SidebarNewsCard({
       <div className="shrink-0">
         <img
           src={item.image || getYouTubeThumbnail(item.videoUrl)}
-          alt={item.title[lang]}
+          alt={pickLang(item.title, lang)}
           className="w-20 h-20 object-cover rounded-lg group-hover:brightness-90 transition"
           onError={handleImageError}
         />
@@ -58,7 +59,7 @@ function SidebarNewsCard({
           </div>
         )}
         <h3 className="text-sm font-bold text-foreground leading-snug line-clamp-3 group-hover:text-brandRed transition-colors">
-          {item.title[lang]}
+          {pickLang(item.title, lang)}
         </h3>
       </div>
     </Link>
@@ -203,12 +204,14 @@ export default function NewsDetails({ lang }) {
   };
 
   const handleShare = async () => {
+    const titleText = pickLang(news.title, lang);
+    const subtitleText = pickLang(news.subtitle, lang);
+    const descText = stripHtml(pickLang(news.description, lang));
     if (navigator.share) {
       try {
         await navigator.share({
-          title: news.title[lang],
-          text:
-            news.subtitle?.[lang] || news.description[lang].substring(0, 100),
+          title: titleText,
+          text: subtitleText || descText.substring(0, 100),
           url: window.location.href,
         });
       } catch (err) {
@@ -260,12 +263,12 @@ export default function NewsDetails({ lang }) {
               </div>
 
               <h1 className="text-xl md:text-3xl font-black text-foreground mb-6 leading-tight">
-                {news.title[lang]}
+                {pickLang(news.title, lang)}
               </h1>
 
-              {news.subtitle && news.subtitle[lang] && (
+              {pickLang(news.subtitle, lang) && (
                 <h2 className="text-base md:text-lg font-semibold text-muted-foreground mb-8 leading-relaxed italic">
-                  {news.subtitle[lang]}
+                  {pickLang(news.subtitle, lang)}
                 </h2>
               )}
 
@@ -319,7 +322,7 @@ export default function NewsDetails({ lang }) {
                   <>
                     <img
                       src={news.image}
-                      alt={news.title[lang]}
+                      alt={pickLang(news.title, lang)}
                       className="w-full h-auto object-cover rounded-lg"
                       onError={handleImageError}
                     />
@@ -367,38 +370,22 @@ export default function NewsDetails({ lang }) {
                 </div>
               </div>
 
-              <div className="text-foreground leading-relaxed whitespace-pre-line">
-                {news.secondaryImage ? (
-                  <>
-                    <div
-                      className="first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
-                      style={{ fontSize: `${fontSize}px` }}
-                    >
-                      {news.description[lang].substring(
-                        0,
-                        Math.floor(news.description[lang].length * 0.4)
-                      )}
-                    </div>
-                    <div className="my-6">
-                      <img
-                        src={news.secondaryImage}
-                        alt="Secondary illustration"
-                        className="w-full h-auto object-cover rounded-lg shadow-lg border border-border"
-                        onError={handleImageError}
-                      />
-                    </div>
-                    <div style={{ fontSize: `${fontSize}px` }}>
-                      {news.description[lang].substring(
-                        Math.floor(news.description[lang].length * 0.4)
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div
-                    className="first-letter:text-5xl first-letter:font-bold first-letter:text-brandRed first-letter:mr-2"
-                    style={{ fontSize: `${fontSize}px` }}
-                  >
-                    {news.description[lang]}
+              <div className="text-foreground leading-relaxed">
+                <div
+                  className="article-body"
+                  style={{ fontSize: `${fontSize}px` }}
+                  dangerouslySetInnerHTML={{
+                    __html: pickLang(news.description, lang),
+                  }}
+                />
+                {news.secondaryImage && (
+                  <div className="my-6">
+                    <img
+                      src={news.secondaryImage}
+                      alt="Secondary illustration"
+                      className="w-full h-auto object-cover rounded-lg shadow-lg border border-border"
+                      onError={handleImageError}
+                    />
                   </div>
                 )}
               </div>

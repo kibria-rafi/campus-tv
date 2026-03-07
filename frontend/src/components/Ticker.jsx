@@ -1,3 +1,5 @@
+import { pickLang } from '../utils/lang';
+
 export default function Ticker({ lang, newsList }) {
   const label = lang === 'bn' ? 'সংবাদ শিরোনাম' : 'Headlines';
 
@@ -9,8 +11,12 @@ export default function Ticker({ lang, newsList }) {
       <div className="flex-1 overflow-hidden relative">
         <div className="animate-scroll flex space-x-12 items-center">
           {newsList.map((news) => (
-            <span key={news._id} className="text-sm md:text-lg font-bold whitespace-nowrap">
-              <span className="text-yellow-400 mx-2">●</span> {news.title[lang]}
+            <span
+              key={news._id}
+              className="text-sm md:text-lg font-bold whitespace-nowrap"
+            >
+              <span className="text-yellow-400 mx-2">●</span>{' '}
+              {pickLang(news.title, lang)}
             </span>
           ))}
         </div>

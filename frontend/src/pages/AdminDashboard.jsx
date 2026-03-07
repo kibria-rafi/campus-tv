@@ -30,7 +30,11 @@ function ToolBtn({ onClick, title, children }) {
   );
 }
 
-function BnEditor({ initialValue = '', onChange }) {
+function RichEditor({
+  initialValue = '',
+  onChange,
+  placeholder = 'Write here...',
+}) {
   const editorRef = useRef(null);
 
   // Populate once on mount; key prop on parent handles re-init when editing id changes
@@ -48,7 +52,7 @@ function BnEditor({ initialValue = '', onChange }) {
   };
 
   const handleLink = () => {
-    const url = window.prompt('লিঙ্ক লিখুন (URL):');
+    const url = window.prompt('Link URL:');
     if (url && url.trim()) exec('createLink', url.trim());
   };
 
@@ -112,7 +116,7 @@ function BnEditor({ initialValue = '', onChange }) {
         contentEditable
         suppressContentEditableWarning
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
-        data-placeholder="বিস্তারিত বর্ণনা লিখুন..."
+        data-placeholder={placeholder}
         className="bn-editor-area min-h-[180px] p-4 outline-none text-foreground bg-background leading-relaxed"
         style={{ fontFamily: "'SolaimanLipi', sans-serif" }}
       />
@@ -167,6 +171,7 @@ export default function AdminDashboard() {
   const [streamMsg, setStreamMsg] = useState(null); // { type: 'success'|'error', text }
   const [testResult, setTestResult] = useState({ primary: null, backup: null });
   const [testing, setTesting] = useState({ primary: false, backup: false });
+  const [validationError, setValidationError] = useState(null);
 
   const navigate = useNavigate();
 
@@ -294,26 +299,56 @@ export default function AdminDashboard() {
   const cancelEdit = () => {
     setEditingId(null);
     setNews(emptyForm);
+    setValidationError(null);
   };
 
-  const isQuillEmpty = (html) => {
+  const isRichEmpty = (html) => {
     if (!html) return true;
-    const stripped = html.replace(/<[^>]*>/g, '').trim();
-    return stripped === '';
+    return html.replace(/<[^>]*>/g, '').trim() === '';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationError(null);
 
-    if (isQuillEmpty(news.descBn)) {
-      alert('বাংলা বিস্তারিত বর্ণনা প্রয়োজন।');
+    const titleBn = news.titleBn.trim();
+    const titleEn = news.titleEn.trim();
+    const hasBnTitle = titleBn !== '';
+    const hasEnTitle = titleEn !== '';
+    const hasBnBody = !isRichEmpty(news.descBn);
+    const hasEnBody = !isRichEmpty(news.descEn);
+
+    if (!hasBnTitle && !hasEnTitle) {
+      setValidationError(
+        'অন্তত একটি ভাষায় শিরোনাম লিখুন। / Enter a title in at least one language.'
+      );
+      return;
+    }
+    if (hasBnTitle && !hasBnBody) {
+      setValidationError('বাংলা শিরোনাম আছে কিন্তু বাংলা বিবরণ নেই।');
+      return;
+    }
+    if (!hasBnTitle && hasBnBody) {
+      setValidationError('বাংলা বিবরণ আছে কিন্তু বাংলা শিরোনাম নেই।');
+      return;
+    }
+    if (hasEnTitle && !hasEnBody) {
+      setValidationError(
+        'English title given but English article body is missing.'
+      );
+      return;
+    }
+    if (!hasEnTitle && hasEnBody) {
+      setValidationError(
+        'English article body given but English title is missing.'
+      );
       return;
     }
 
     const payload = {
-      title: { bn: news.titleBn, en: news.titleEn || '' },
+      title: { bn: titleBn, en: titleEn },
       subtitle: { bn: news.subtitleBn || '', en: news.subtitleEn || '' },
-      description: { bn: news.descBn, en: news.descEn || '' },
+      description: { bn: news.descBn || '', en: news.descEn || '' },
       image: news.image,
       secondaryImage: news.secondaryImage || '',
       imageCaption: news.imageCaption || '',
@@ -408,6 +443,11 @@ export default function AdminDashboard() {
                 onSubmit={(e) => handleSubmit(e)}
                 className="p-8 space-y-6"
               >
+                <p className="text-xs text-muted-foreground bg-muted rounded-lg px-4 py-2 border border-border">
+                  বাংলায়, ইংরেজিতে, অথবা উভয় ভাষায় পাবলিশ করতে
+                  পারবেন।&nbsp;/&nbsp;You can publish in Bengali, English, or
+                  both.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <input
                     type="text"
@@ -417,7 +457,6 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setNews({ ...news, titleBn: e.target.value })
                     }
-                    required
                   />
                   <input
                     type="text"
@@ -568,27 +607,41 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-xs font-bold uppercase text-muted-foreground mb-2">
-                      বিস্তারিত বর্ণনা (বাংলা){' '}
-                      <span className="text-brandRed">*</span>
+                      বিস্তারিত বর্ণনা (বাংলা)
                     </p>
-                    <BnEditor
-                      key={editingId || 'new'}
+                    <RichEditor
+                      key={`bn-${editingId || 'new'}`}
                       initialValue={news.descBn}
                       onChange={(val) =>
                         setNews((prev) => ({ ...prev, descBn: val }))
                       }
+                      placeholder="বিস্তারিত বর্ণনা লিখুন..."
                     />
                   </div>
-                  <textarea
-                    placeholder="Description (English) — optional"
-                    className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-4 rounded-xl h-32 outline-none focus:border-brandRed"
-                    value={news.descEn}
-                    onChange={(e) =>
-                      setNews({ ...news, descEn: e.target.value })
-                    }
-                  />
+                  <div>
+                    <p className="text-xs font-bold uppercase text-muted-foreground mb-2">
+                      Article Body (English)
+                    </p>
+                    <RichEditor
+                      key={`en-${editingId || 'new'}`}
+                      initialValue={news.descEn}
+                      onChange={(val) =>
+                        setNews((prev) => ({ ...prev, descEn: val }))
+                      }
+                      placeholder="Write article body in English..."
+                    />
+                  </div>
                 </div>
 
+                {validationError && (
+                  <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 text-red-500 rounded-xl px-4 py-3 text-sm font-semibold">
+                    <AlertCircle
+                      size={16}
+                      className="mt-0.5 shrink-0"
+                    />
+                    {validationError}
+                  </div>
+                )}
                 <button
                   type="submit"
                   className={`w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed`}

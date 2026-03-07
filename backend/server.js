@@ -91,7 +91,7 @@ app.get('/health', (_req, res) => {
 
 const newsSchema = new mongoose.Schema({
   title: {
-    bn: { type: String, required: true },
+    bn: { type: String, default: '' },
     en: { type: String, default: '' },
   },
   subtitle: {
@@ -99,7 +99,7 @@ const newsSchema = new mongoose.Schema({
     en: { type: String, default: '' },
   },
   description: {
-    bn: { type: String, required: true },
+    bn: { type: String, default: '' },
     en: { type: String, default: '' },
   },
   image: String,
@@ -268,10 +268,56 @@ function parseCategories(raw) {
   return [...new Set(valid)];
 }
 
+/** Strip HTML tags to check whether rich-text content is effectively empty. */
+function isContentEmpty(str) {
+  if (!str || typeof str !== 'string') return true;
+  return str.replace(/<[^>]*>/g, '').trim() === '';
+}
+
+/**
+ * Validate bilingual news payload.
+ * At least one language must be complete (title + description).
+ * Returns an error string, or null if valid.
+ */
+function validateNewsPayload(body) {
+  const titleBn = (body.title?.bn || '').trim();
+  const titleEn = (body.title?.en || '').trim();
+  const hasBnTitle = titleBn !== '';
+  const hasEnTitle = titleEn !== '';
+
+  if (!hasBnTitle && !hasEnTitle) {
+    return 'At least one language title is required.';
+  }
+
+  const hasBnDesc = !isContentEmpty(body.description?.bn);
+  const hasEnDesc = !isContentEmpty(body.description?.en);
+
+  if (hasBnTitle && !hasBnDesc) {
+    return 'Bengali title provided but Bengali description is missing.';
+  }
+  if (!hasBnTitle && hasBnDesc) {
+    return 'Bengali description provided but Bengali title is missing.';
+  }
+  if (hasEnTitle && !hasEnDesc) {
+    return 'English title provided but English description is missing.';
+  }
+  if (!hasEnTitle && hasEnDesc) {
+    return 'English description provided but English title is missing.';
+  }
+
+  return null;
+}
+
 app.post('/api/news', async (req, res) => {
   try {
     const categories = parseCategories(req.body.categories);
     const body = { ...req.body, videoUrl: '', isLive: false, categories };
+
+    const validationError = validateNewsPayload(body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
     const newNews = new News(body);
     await newNews.save();
     res.json({ success: true, message: 'News published!' });
@@ -333,6 +379,12 @@ app.put('/api/news/:id', async (req, res) => {
   try {
     const categories = parseCategories(req.body.categories);
     const body = { ...req.body, videoUrl: '', isLive: false, categories };
+
+    const validationError = validateNewsPayload(body);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
     const updatedNews = await News.findByIdAndUpdate(req.params.id, body, {
       new: true,
       runValidators: true,

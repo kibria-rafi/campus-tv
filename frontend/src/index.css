@@ -159,28 +159,35 @@
   animation-play-state: paused;
 }
 
-/* ── Bengali article body editor — admin panel ──────────────────────────── */
+/* ── Rich-text content — editor (admin) and article display ─────────────── */
 .bn-editor-area:empty::before {
   content: attr(data-placeholder);
   color: hsl(var(--muted-foreground));
   pointer-events: none;
   display: block;
 }
-.bn-editor-area blockquote {
+.bn-editor-area blockquote,
+.article-body blockquote {
   border-left: 3px solid #ed1c24;
   margin: 0.5rem 0;
   padding-left: 1rem;
   color: hsl(var(--muted-foreground));
 }
-.bn-editor-area ul {
+.bn-editor-area ul,
+.article-body ul {
   list-style: disc;
   padding-left: 1.5rem;
 }
-.bn-editor-area ol {
+.bn-editor-area ol,
+.article-body ol {
   list-style: decimal;
   padding-left: 1.5rem;
 }
-.bn-editor-area a {
+.bn-editor-area a,
+.article-body a {
   color: #ed1c24;
   text-decoration: underline;
+}
+.article-body p {
+  margin-bottom: 0.75rem;
 }
