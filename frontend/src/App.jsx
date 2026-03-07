@@ -107,7 +107,9 @@ function App() {
             }
           />
         </Routes>
-        <Footer lang={lang} />
+        <div className="pb-16 md:pb-0">
+          <Footer lang={lang} />
+        </div>
         <BottomNav lang={lang} />
       </div>
     </Router>
