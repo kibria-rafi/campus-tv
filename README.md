@@ -6,10 +6,9 @@
 
 ## 🌐 Live Website
 
-| Resource        | URL                                                                          |
-| --------------- | ---------------------------------------------------------------------------- |
-| **Live Site**   | [https://campus-tv.onrender.com](https://campus-tv.onrender.com)             |
-| **Admin Panel** | [https://campus-tv.onrender.com/admin](https://campus-tv.onrender.com/admin) |
+| Resource      | URL                                                              |
+| ------------- | ---------------------------------------------------------------- |
+| **Live Site** | [https://campus-tv.onrender.com](https://campus-tv.onrender.com) |
 
 ---
 
@@ -163,10 +162,6 @@ MONGO_URI=your_mongodb_connection_string
 # Secret key used to sign JWT tokens
 JWT_SECRET=your_jwt_secret
 
-# Admin login credentials
-ADMIN_USER=admin
-ADMIN_PASS=your_admin_password
-
 # YouTube Data API v3 key
 YOUTUBE_API_KEY=your_youtube_api_key
 
@@ -250,25 +245,7 @@ campus-tv/
 
 ---
 
-## 🔑 Admin Access
-
-The admin panel is available at [`/admin`](https://campus-tv.onrender.com/admin) (redirects to `/login` if unauthenticated).
-
-| Field        | Value       |
-| ------------ | ----------- |
-| **Username** | `admin`     |
-| **Password** | `campus321` |
-
-Once logged in, the dashboard provides:
-
-- **News Management** — create, edit, and delete news articles
-- **Message Inbox** — view and delete contact form submissions
-- **Stream Settings** — update the live HLS stream URL and thumbnail
-- **Live Viewer Monitor** — real-time count of active stream viewers
-
----
-
-## 🚀 Deployment
+## Deployment
 
 Both the frontend and backend are deployed on **[Render](https://render.com/)**.
 
