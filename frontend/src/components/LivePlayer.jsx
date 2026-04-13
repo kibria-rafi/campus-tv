@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import VideoJsPlayer from './VideoJsPlayer';
 import YouTubeArchivePlayer from './YouTubeArchivePlayer';
 import { useStreamSettings } from '../hooks/useStreamSettings';
-import { LIVE_HLS_URL } from '../config/liveStream';
 import Loader from './ui/Loader';
 
 /**
@@ -24,8 +23,8 @@ export default function LivePlayer({
 }) {
   const { settings, loading } = useStreamSettings();
 
-  // Prefer admin-configured URL; if missing, fall back to legacy default URL.
-  const effectivePrimary = (settings?.primaryM3u8 || LIVE_HLS_URL || '').trim();
+  // Stream URL comes only from admin-configured backend settings.
+  const effectivePrimary = (settings?.primaryM3u8 || '').trim();
   const backupSrc = settings?.backupM3u8 || null;
 
   // 'compact' → centred narrow card  |  'full' → centred wide card  |  'hero' → fills container (no max-w)

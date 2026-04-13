@@ -49,7 +49,7 @@ function fetchSettings() {
  * useStreamSettings
  *
  * Returns admin-configured stream URLs, shared & cached across components.
- * Falls back gracefully to null so LivePlayer can use its built-in default.
+ * Falls back gracefully to empty settings so LivePlayer can enter archive mode when no stream URLs are configured.
  *
  * @returns {{ settings: { primaryM3u8: string, backupM3u8: string|null } | null, loading: boolean }}
  */
