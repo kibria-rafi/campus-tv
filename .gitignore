@@ -26,3 +26,9 @@ dist-ssr
 .vercel
 .env*.local
 backend/.env
+
+# Added for security
+.env
+.env.*
+frontend/.env
+frontend/.env.*

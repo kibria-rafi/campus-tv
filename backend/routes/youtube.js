@@ -97,10 +97,7 @@ router.get('/latest', async (req, res) => {
   } catch (err) {
     console.error('[YouTube] Data API fetch error:', err);
     return res.status(500).json({
-      success: false,
-      source: 'youtube-api',
-      message: 'Failed to fetch videos from YouTube Data API.',
-      details: err.message,
+      message: 'Internal server error',
     });
   }
 });

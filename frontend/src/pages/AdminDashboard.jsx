@@ -188,6 +188,10 @@ export default function AdminDashboard() {
   const [pwSubmitting, setPwSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const handleUnauthorized = useCallback(() => {
+    localStorage.removeItem('adminToken');
+    navigate('/admin');
+  }, [navigate]);
 
   const fetchUnreadCount = useCallback(async () => {
     try {
@@ -199,20 +203,25 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.count ?? 0);
+      } else if (res.status === 401 || res.status === 403) {
+        handleUnauthorized();
       }
     } catch {
       // silent — badge stays at last known value
     }
-  }, []);
+  }, [handleUnauthorized]);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
-    if (!token) navigate('/admin');
+    if (!token) {
+      handleUnauthorized();
+      return;
+    }
     fetchNews();
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 45_000);
     return () => clearInterval(interval);
-  }, [navigate, fetchUnreadCount]);
+  }, [fetchUnreadCount, handleUnauthorized]);
 
   const fetchStreamSettings = useCallback(async () => {
     try {
@@ -226,11 +235,13 @@ export default function AdminDashboard() {
           primaryM3u8: data.primaryM3u8 || '',
           backupM3u8: data.backupM3u8 || '',
         });
+      } else if (res.status === 401 || res.status === 403) {
+        handleUnauthorized();
       }
     } catch (err) {
       console.error('Failed to load stream settings:', err);
     }
-  }, []);
+  }, [handleUnauthorized]);
 
   const fetchNews = async () => {
     try {
@@ -248,6 +259,10 @@ export default function AdminDashboard() {
     setStreamMsg(null);
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        handleUnauthorized();
+        return;
+      }
       const res = await fetch(`${API_BASE}/api/admin/stream-settings`, {
         method: 'PUT',
         headers: {
@@ -270,6 +285,8 @@ export default function AdminDashboard() {
           backupM3u8: data.backupM3u8 || '',
         });
         setTestResult({ primary: null, backup: null });
+      } else if (res.status === 401 || res.status === 403) {
+        handleUnauthorized();
       } else {
         setStreamMsg({
           type: 'error',
@@ -401,9 +418,17 @@ export default function AdminDashboard() {
       : `${API_BASE}/api/news`;
 
     try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        handleUnauthorized();
+        return;
+      }
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -412,6 +437,8 @@ export default function AdminDashboard() {
         setTimeout(() => setPublishMsg(null), 4000);
         cancelEdit();
         fetchNews();
+      } else if (res.status === 401 || res.status === 403) {
+        handleUnauthorized();
       } else {
         const errData = await res.json();
         setPublishMsg({
@@ -419,7 +446,7 @@ export default function AdminDashboard() {
           text: errData.error || 'পাবলিশ করতে সমস্যা হয়েছে',
         });
       }
-    } catch (err) {
+    } catch {
       setPublishMsg({ type: 'error', text: 'সার্ভার কানেকশনে সমস্যা!' });
     }
   };
@@ -431,10 +458,7 @@ export default function AdminDashboard() {
           Campus TV Admin
         </h1>
         <button
-          onClick={() => {
-            localStorage.removeItem('adminToken');
-            navigate('/admin');
-          }}
+          onClick={handleUnauthorized}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full font-bold hover:bg-brandRed transition-all"
         >
           <LogOut size={18} /> Logout
@@ -809,10 +833,28 @@ export default function AdminDashboard() {
                     <button
                       onClick={async () => {
                         if (window.confirm('আপনি কি এটি ডিলিট করতে চান?')) {
-                          await fetch(`${API_BASE}/api/news/${item._id}`, {
-                            method: 'DELETE',
-                          });
-                          fetchNews();
+                          const token = localStorage.getItem('adminToken');
+                          if (!token) {
+                            handleUnauthorized();
+                            return;
+                          }
+                          const res = await fetch(
+                            `${API_BASE}/api/news/${item._id}`,
+                            {
+                              method: 'DELETE',
+                              headers: { Authorization: `Bearer ${token}` },
+                            }
+                          );
+                          if (res.ok) {
+                            fetchNews();
+                          } else if (res.status === 401 || res.status === 403) {
+                            handleUnauthorized();
+                          } else {
+                            setPublishMsg({
+                              type: 'error',
+                              text: 'ডিলিট করতে সমস্যা হয়েছে',
+                            });
+                          }
                         }
                       }}
                       className="text-brandRed p-1.5 hover:bg-red-50 rounded-full border border-red-100"
@@ -1059,6 +1101,8 @@ export default function AdminDashboard() {
                       newPassword: '',
                       confirmPassword: '',
                     });
+                  } else if (res.status === 401 || res.status === 403) {
+                    handleUnauthorized();
                   } else {
                     setPwMsg({
                       type: 'error',

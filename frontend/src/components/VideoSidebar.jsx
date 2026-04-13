@@ -90,9 +90,10 @@ export default function VideoSidebar({ lang }) {
         console.error('Error fetching YouTube videos:', err);
         setError(err.message);
       } finally {
-        if (cancelled) return;
         clearTimeout(timeoutId);
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 

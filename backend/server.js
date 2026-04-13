@@ -12,9 +12,27 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// Set FRONTEND_URL on Render to the deployed frontend origin.
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // e.g. https://campus-tv.onrender.com
+  process.env.FRONTEND_URL_DEV,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  // Allow non-browser clients (curl, server-to-server).
+  if (!origin) return true;
+  return allowedOrigins.includes(origin);
+}
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, cb) => {
+      if (isAllowedOrigin(origin)) return cb(null, true);
+      return cb(new Error(`Socket.IO CORS blocked for origin: ${origin}`));
+    },
     methods: ['GET', 'POST'],
   },
 });
@@ -41,30 +59,19 @@ io.on('connection', (socket) => {
   });
 });
 
-// Set FRONTEND_URL on Render to the deployed frontend origin.
-const allowedOrigins = [
-  process.env.FRONTEND_URL, // e.g. https://campus-tv.onrender.com
-  process.env.FRONTEND_URL_DEV,
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-].filter(Boolean);
-
 console.log('[CORS] Allowed origins:', allowedOrigins);
 
 app.use(
   cors({
     origin: (origin, cb) => {
-      // allow non-browser clients (curl, server-to-server)
-      if (!origin) return cb(null, true);
-      if (allowedOrigins.includes(origin)) return cb(null, true);
+      if (isAllowedOrigin(origin)) return cb(null, true);
       return cb(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // ── News Categories ────────────────────────────────────────────────────────
 const ALLOWED_CATEGORIES = [
@@ -179,6 +186,13 @@ function isValidStreamUrl(url) {
   } catch {
     return false;
   }
+}
+
+function ensureValidObjectId(req, res, next) {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ error: 'Invalid ID format.' });
+  }
+  return next();
 }
 
 app.post('/api/admin/login', async (req, res) => {
@@ -306,7 +320,8 @@ app.get('/api/news', async (req, res) => {
     const news = await query;
     res.json(news);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -354,9 +369,7 @@ app.get('/api/news/search', async (req, res) => {
     return res.json({ results });
   } catch (err) {
     console.error('[Search] News search failed:', err);
-    return res
-      .status(500)
-      .json({ error: 'News search failed', details: err.message });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -407,7 +420,7 @@ function validateNewsPayload(body) {
   return null;
 }
 
-app.post('/api/news', async (req, res) => {
+app.post('/api/news', requireAdmin, async (req, res) => {
   try {
     const categories = parseCategories(req.body.categories);
     const body = { ...req.body, videoUrl: '', isLive: false, categories };
@@ -421,12 +434,13 @@ app.post('/api/news', async (req, res) => {
     await newNews.save();
     res.json({ success: true, message: 'News published!' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // Sidebar endpoint — must be declared BEFORE /api/news/:id patterns
-app.get('/api/news/sidebar/:id', async (req, res) => {
+app.get('/api/news/sidebar/:id', ensureValidObjectId, async (req, res) => {
   try {
     const relatedLimit = Math.min(parseInt(req.query.related) || 10, 20);
     const latestLimit = Math.min(parseInt(req.query.latest) || 10, 20);
@@ -470,11 +484,11 @@ app.get('/api/news/sidebar/:id', async (req, res) => {
     return res.json({ related, latest: latestRaw });
   } catch (err) {
     console.error('[Sidebar] Error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-app.get('/api/news/:id', async (req, res) => {
+app.get('/api/news/:id', ensureValidObjectId, async (req, res) => {
   try {
     const doc = await News.findById(req.params.id).lean();
     if (!doc) {
@@ -482,42 +496,55 @@ app.get('/api/news/:id', async (req, res) => {
     }
     return res.json(doc);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-app.put('/api/news/:id', async (req, res) => {
-  try {
-    const categories = parseCategories(req.body.categories);
-    const body = { ...req.body, videoUrl: '', isLive: false, categories };
+app.put(
+  '/api/news/:id',
+  requireAdmin,
+  ensureValidObjectId,
+  async (req, res) => {
+    try {
+      const categories = parseCategories(req.body.categories);
+      const body = { ...req.body, videoUrl: '', isLive: false, categories };
 
-    const validationError = validateNewsPayload(body);
-    if (validationError) {
-      return res.status(400).json({ error: validationError });
+      const validationError = validateNewsPayload(body);
+      if (validationError) {
+        return res.status(400).json({ error: validationError });
+      }
+
+      const updatedNews = await News.findByIdAndUpdate(req.params.id, body, {
+        new: true,
+        runValidators: true,
+      });
+      if (!updatedNews)
+        return res.status(404).json({ message: 'News not found' });
+      res.json({ success: true, updatedNews });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Internal server error' });
     }
-
-    const updatedNews = await News.findByIdAndUpdate(req.params.id, body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedNews)
-      return res.status(404).json({ message: 'News not found' });
-    res.json({ success: true, updatedNews });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
-app.delete('/api/news/:id', async (req, res) => {
-  try {
-    const deletedNews = await News.findByIdAndDelete(req.params.id);
-    if (!deletedNews)
-      return res.status(404).json({ message: 'News not found' });
-    res.json({ success: true, message: 'News deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+app.delete(
+  '/api/news/:id',
+  requireAdmin,
+  ensureValidObjectId,
+  async (req, res) => {
+    try {
+      const deletedNews = await News.findByIdAndDelete(req.params.id);
+      if (!deletedNews)
+        return res.status(404).json({ message: 'News not found' });
+      res.json({ success: true, message: 'News deleted successfully' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   }
-});
+);
 
 app.get('/api/live/viewers', async (_req, res) => {
   const sockets = await io.in('live').allSockets();
@@ -593,32 +620,44 @@ app.get('/api/admin/messages/unread-count', requireAdmin, async (_req, res) => {
 });
 
 // PATCH mark a message as read
-app.patch('/api/admin/messages/:id/read', requireAdmin, async (req, res) => {
-  try {
-    const updated = await ContactMessage.findByIdAndUpdate(
-      req.params.id,
-      { isRead: true },
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ error: 'Message not found.' });
-    return res.json({ success: true });
-  } catch (err) {
-    console.error('[Messages] Mark read error:', err);
-    return res.status(500).json({ error: 'Failed to mark message as read.' });
+app.patch(
+  '/api/admin/messages/:id/read',
+  requireAdmin,
+  ensureValidObjectId,
+  async (req, res) => {
+    try {
+      const updated = await ContactMessage.findByIdAndUpdate(
+        req.params.id,
+        { isRead: true },
+        { new: true }
+      );
+      if (!updated)
+        return res.status(404).json({ error: 'Message not found.' });
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('[Messages] Mark read error:', err);
+      return res.status(500).json({ error: 'Failed to mark message as read.' });
+    }
   }
-});
+);
 
 // DELETE a message
-app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
-  try {
-    const deleted = await ContactMessage.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Message not found.' });
-    return res.json({ success: true, message: 'Message deleted.' });
-  } catch (err) {
-    console.error('[Messages] DELETE error:', err);
-    return res.status(500).json({ error: 'Failed to delete message.' });
+app.delete(
+  '/api/admin/messages/:id',
+  requireAdmin,
+  ensureValidObjectId,
+  async (req, res) => {
+    try {
+      const deleted = await ContactMessage.findByIdAndDelete(req.params.id);
+      if (!deleted)
+        return res.status(404).json({ error: 'Message not found.' });
+      return res.json({ success: true, message: 'Message deleted.' });
+    } catch (err) {
+      console.error('[Messages] DELETE error:', err);
+      return res.status(500).json({ error: 'Failed to delete message.' });
+    }
   }
-});
+);
 
 // ── Stream Settings routes ─────────────────────────────────────────────────
 
@@ -697,9 +736,10 @@ app.put('/api/admin/stream-settings', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('[StreamSettings] Admin PUT error:', err);
-    return res
-      .status(err.message.includes('valid') ? 400 : 500)
-      .json({ error: err.message || 'Failed to update stream settings' });
+    if (err.message.includes('valid')) {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 

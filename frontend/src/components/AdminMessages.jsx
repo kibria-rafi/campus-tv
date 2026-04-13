@@ -75,12 +75,15 @@ export default function AdminMessages({ onUnreadRefresh }) {
             prev.map((m) => (m._id === id ? { ...m, isRead: true } : m))
           );
           onUnreadRefresh?.();
+        } else if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('adminToken');
+          navigate('/admin');
         }
       } catch {
         // silent — UI stays consistent
       }
     },
-    [onUnreadRefresh]
+    [navigate, onUnreadRefresh]
   );
 
   const deleteMessage = useCallback(
@@ -95,6 +98,9 @@ export default function AdminMessages({ onUnreadRefresh }) {
           setMessages((prev) => prev.filter((m) => m._id !== id));
           if (expandedId === id) setExpandedId(null);
           onUnreadRefresh?.();
+        } else if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('adminToken');
+          navigate('/admin');
         } else {
           setNotice({ type: 'error', text: 'Failed to delete message.' });
         }
@@ -105,7 +111,7 @@ export default function AdminMessages({ onUnreadRefresh }) {
         });
       }
     },
-    [expandedId, onUnreadRefresh]
+    [expandedId, navigate, onUnreadRefresh]
   );
 
   const handleExpand = async (message) => {

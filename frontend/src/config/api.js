@@ -4,7 +4,13 @@
 // REQUIRED on Render (frontend service → Environment):
 //   VITE_API_URL=https://<your-backend-service>.onrender.com
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const configuredApiBase = (import.meta.env.VITE_API_URL || '').trim();
+
+if (import.meta.env.PROD && !configuredApiBase) {
+  throw new Error('[api.js] VITE_API_URL must be set for production builds.');
+}
+
+export const API_BASE = configuredApiBase || 'http://localhost:5001';
 
 // Warn once in dev if the env var is missing — in production this means every
 // fetch will hit localhost (wrong URL).

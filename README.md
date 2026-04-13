@@ -57,7 +57,7 @@ cd campus-tv
 # 2. Backend
 cd backend && npm install
 # Create backend/.env (see Environment Variables below)
-npm start          # http://localhost:5000
+npm start          # http://localhost:5001
 
 # 3. Frontend (new terminal)
 cd frontend && npm install
@@ -73,9 +73,19 @@ Create `backend/.env`:
 ```env
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
+ADMIN_USER=admin
+ADMIN_PASS=change_this_password
 YOUTUBE_API_KEY=your_youtube_api_key
 YOUTUBE_CHANNEL_ID=your_channel_id
 FRONTEND_URL=https://your-frontend-domain.com
+FRONTEND_URL_DEV=http://localhost:5173
+PORT=5001
+```
+
+Create `frontend/.env` for local development:
+
+```env
+VITE_API_URL=http://localhost:5001
 ```
 
 ---
@@ -111,6 +121,11 @@ Both services are deployed on **[Render](https://render.com/)**.
 | **Start** | `node server.js` | _(static site — publish `dist`)_ |
 
 Add all environment variables from the section above to the backend service on Render.
+
+For Render production deployments, set:
+
+- Frontend service: `VITE_API_URL=https://<your-backend-service>.onrender.com`
+- Backend service: `MONGO_URI`, `JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASS`, `YOUTUBE_API_KEY`, `YOUTUBE_CHANNEL_ID`, `FRONTEND_URL`
 
 ---
 
