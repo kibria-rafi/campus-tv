@@ -63,15 +63,22 @@ export default function New({ lang }) {
   const t = translations[lang];
 
   const fetchNews = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/api/news`);
+      const res = await fetch(`${API_BASE}/api/news?limit=120&summary=1`, {
+        signal: controller.signal,
+      });
       const data = await res.json();
       setAllNews(data);
       setNewsList(data);
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching news:', err);
+      setAllNews([]);
+      setNewsList([]);
+    } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

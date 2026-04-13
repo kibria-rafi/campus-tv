@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import VideoJsPlayer from './VideoJsPlayer';
 import YouTubeArchivePlayer from './YouTubeArchivePlayer';
 import { useStreamSettings } from '../hooks/useStreamSettings';
+import { LIVE_HLS_URL } from '../config/liveStream';
+import Loader from './ui/Loader';
 
 /**
  * LivePlayer
@@ -20,11 +22,10 @@ export default function LivePlayer({
   title = 'Live Stream',
   variant = 'compact',
 }) {
-  const { settings } = useStreamSettings();
+  const { settings, loading } = useStreamSettings();
 
-  // Use admin-configured URLs; fall back to empty string so VideoJsPlayer
-  // triggers its error/timeout handler and falls through to archive.
-  const effectivePrimary = settings?.primaryM3u8 || '';
+  // Prefer admin-configured URL; if missing, fall back to legacy default URL.
+  const effectivePrimary = (settings?.primaryM3u8 || LIVE_HLS_URL || '').trim();
   const backupSrc = settings?.backupM3u8 || null;
 
   // 'compact' → centred narrow card  |  'full' → centred wide card  |  'hero' → fills container (no max-w)
@@ -127,7 +128,14 @@ export default function LivePlayer({
       </div>
 
       <div className="p-3">
-        {mode === 'live' ? (
+        {loading ? (
+          <div className="aspect-video w-full rounded-xl bg-muted flex items-center justify-center">
+            <Loader
+              size="md"
+              className="text-brandRed"
+            />
+          </div>
+        ) : mode === 'live' ? (
           <VideoJsPlayer
             key={liveKey}
             src={activeSrc}

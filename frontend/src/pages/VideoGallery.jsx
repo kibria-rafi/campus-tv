@@ -10,17 +10,22 @@ export default function VideoGallery({ lang }) {
 
   useEffect(() => {
     const fetchVideos = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
       try {
-        const res = await fetch(`${API_BASE}/api/news`);
+        const res = await fetch(`${API_BASE}/api/news?limit=150&summary=1`, {
+          signal: controller.signal,
+        });
         const data = await res.json();
         // ভিডিও ইউআরএল আছে এমন পোস্টগুলো ফিল্টার করা
         const onlyVideos = data.filter(
           (item) => item.videoUrl && item.videoUrl.trim() !== ''
         );
         setVideos(onlyVideos);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching videos:', err);
+      } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };

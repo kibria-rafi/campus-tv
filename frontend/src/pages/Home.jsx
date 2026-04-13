@@ -33,9 +33,16 @@ export default function Home({ lang }) {
   const t = translations[lang];
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/news`)
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    fetch(`${API_BASE}/api/news?limit=40&summary=1`, {
+      signal: controller.signal,
+    })
       .then((res) => res.json())
       .then((data) => {
+        if (cancelled) return;
         // Filter out video posts (non-empty videoUrl that are not live)
         const articles = data.filter(
           (item) =>
@@ -45,9 +52,24 @@ export default function Home({ lang }) {
         );
         setAllNews(articles);
         setNewsList(articles);
-        setLoading(false);
       })
-      .catch((err) => console.error('Error fetching news:', err));
+      .catch((err) => {
+        if (cancelled || err.name === 'AbortError') return;
+        console.error('Error fetching news:', err);
+        setAllNews([]);
+        setNewsList([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        clearTimeout(timeoutId);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);
 
   const handleCategoryClick = (category) => {

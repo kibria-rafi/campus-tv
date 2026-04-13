@@ -22,7 +22,11 @@ export default function VideoJsPlayer({
   const fallbackTimerRef = useRef(null);
 
   useEffect(() => {
-    if (!containerRef.current || !src) return;
+    if (!containerRef.current) return;
+    if (!src) {
+      onFallback?.('missing-source');
+      return;
+    }
 
     // video.js requires an actual <video> element; we create it here so
     // React does not manage it (video.js owns its own DOM lifecycle).

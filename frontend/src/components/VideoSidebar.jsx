@@ -65,11 +65,17 @@ export default function VideoSidebar({ lang }) {
   const [activeVideo, setActiveVideo] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
     const fetchVideos = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${API_BASE}/api/youtube/latest?limit=7`);
+        const res = await fetch(`${API_BASE}/api/youtube/latest?limit=7`, {
+          signal: controller.signal,
+        });
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -77,16 +83,26 @@ export default function VideoSidebar({ lang }) {
         }
 
         const data = await res.json();
+        if (cancelled) return;
         setVideos(data.items || []);
       } catch (err) {
+        if (cancelled || err.name === 'AbortError') return;
         console.error('Error fetching YouTube videos:', err);
         setError(err.message);
       } finally {
+        if (cancelled) return;
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
 
     fetchVideos();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);
 
   const handleVideoClick = (video) => {

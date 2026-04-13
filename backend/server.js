@@ -273,8 +273,12 @@ app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
 
 app.get('/api/news', async (req, res) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const parsedLimit = req.query.limit ? parseInt(req.query.limit, 10) : null;
+    const limit =
+      Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
     const category = req.query.category; // Filter by category
+    const summaryOnly =
+      req.query.summary === '1' || req.query.summary === 'true';
 
     // Base filter: only plain articles (no videoUrl and not isLive)
     const filter = {
@@ -287,7 +291,13 @@ app.get('/api/news', async (req, res) => {
       filter.categories = category;
     }
 
-    let query = News.find(filter).sort({ createdAt: -1 });
+    let query = News.find(filter).sort({ createdAt: -1 }).lean();
+
+    if (summaryOnly) {
+      query = query.select(
+        'title subtitle image videoUrl isLive category categories createdAt'
+      );
+    }
 
     if (limit && limit > 0) {
       query = query.limit(limit);
@@ -461,6 +471,18 @@ app.get('/api/news/sidebar/:id', async (req, res) => {
   } catch (err) {
     console.error('[Sidebar] Error:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/news/:id', async (req, res) => {
+  try {
+    const doc = await News.findById(req.params.id).lean();
+    if (!doc) {
+      return res.status(404).json({ error: 'News not found' });
+    }
+    return res.json(doc);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -719,7 +741,19 @@ const startServer = async () => {
       }
     }
 
-    const PORT = process.env.PORT || 5001;
+    const PORT = Number(process.env.PORT) || 5001;
+
+    server.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(
+          `[Server] Port ${PORT} is already in use. Stop the existing process or change PORT in .env.`
+        );
+      } else {
+        console.error('[Server] Failed to start HTTP server:', err);
+      }
+      process.exit(1);
+    });
+
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });

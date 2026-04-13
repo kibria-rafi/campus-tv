@@ -79,16 +79,24 @@ export default function NewsDetails({ lang }) {
 
   useEffect(() => {
     const fetchSingleNews = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
       try {
-        const res = await fetch(`${API_BASE}/api/news`);
-        const allNews = await res.json();
-        const selectedNews = allNews.find((item) => item._id === id);
-        if (selectedNews) setNews(selectedNews);
+        const res = await fetch(`${API_BASE}/api/news/${id}`, {
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const selectedNews = await res.json();
+          setNews(selectedNews);
+        } else {
+          setNews(null);
+        }
 
         // Fetch sidebar data from dedicated endpoint
         try {
           const sidebarRes = await fetch(
-            `${API_BASE}/api/news/sidebar/${id}?related=5&latest=6`
+            `${API_BASE}/api/news/sidebar/${id}?related=5&latest=6`,
+            { signal: controller.signal }
           );
           if (sidebarRes.ok) {
             const sidebarJson = await sidebarRes.json();
@@ -98,7 +106,10 @@ export default function NewsDetails({ lang }) {
             });
           } else {
             // Fallback: just load latest
-            const latestRes = await fetch(`${API_BASE}/api/news?limit=6`);
+            const latestRes = await fetch(
+              `${API_BASE}/api/news?limit=6&summary=1`,
+              { signal: controller.signal }
+            );
             const latestData = await latestRes.json();
             setSidebarData({
               related: [],
@@ -107,17 +118,20 @@ export default function NewsDetails({ lang }) {
           }
         } catch {
           // Fallback if sidebar endpoint not yet deployed
-          const latestRes = await fetch(`${API_BASE}/api/news?limit=7`);
+          const latestRes = await fetch(
+            `${API_BASE}/api/news?limit=7&summary=1`,
+            { signal: controller.signal }
+          );
           const latestData = await latestRes.json();
           setSidebarData({
             related: [],
             latest: latestData.filter((item) => item._id !== id).slice(0, 6),
           });
         }
-
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching details:', err);
+      } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };

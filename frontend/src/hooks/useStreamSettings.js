@@ -6,24 +6,42 @@ import { API_BASE } from '../config/api';
 let _cache = null; // { primaryM3u8, backupM3u8 } once resolved
 let _promise = null; // in-flight fetch promise
 
+function normalizeSettings(data) {
+  return {
+    primaryM3u8:
+      typeof data?.primaryM3u8 === 'string' ? data.primaryM3u8.trim() : '',
+    backupM3u8:
+      typeof data?.backupM3u8 === 'string' && data.backupM3u8.trim()
+        ? data.backupM3u8.trim()
+        : null,
+  };
+}
+
 function fetchSettings() {
+  if (_cache) return Promise.resolve(_cache);
   if (_promise) return _promise;
-  _promise = fetch(`${API_BASE}/api/stream-settings`)
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  _promise = fetch(`${API_BASE}/api/stream-settings`, {
+    signal: controller.signal,
+  })
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
-      if (data && data.primaryM3u8) {
-        _cache = {
-          primaryM3u8: data.primaryM3u8 || '',
-          backupM3u8: data.backupM3u8 || null,
-        };
-      }
+      _cache = normalizeSettings(data);
       return _cache;
     })
     .catch(() => {
-      // Don't cache failures so a retry can occur on next page navigation
+      // Normalize failures so UI can gracefully fall back without blank states.
+      _cache = normalizeSettings(null);
+      return _cache;
+    })
+    .finally(() => {
+      clearTimeout(timeoutId);
       _promise = null;
-      return null;
     });
+
   return _promise;
 }
 
@@ -44,6 +62,7 @@ export function useStreamSettings() {
       // Already resolved — nothing to do
       return;
     }
+
     let cancelled = false;
     fetchSettings().then((data) => {
       if (!cancelled) {
