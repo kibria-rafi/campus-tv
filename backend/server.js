@@ -16,6 +16,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.FRONTEND_URL, // e.g. https://campus-tv.onrender.com
   process.env.FRONTEND_URL_DEV,
+  'https://campustv.ac',
+  'https://www.campustv.ac',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
