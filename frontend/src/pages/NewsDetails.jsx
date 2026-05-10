@@ -22,6 +22,10 @@ const CATEGORY_LABELS = {
   Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
   Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Campus: { bn: 'ক্যাম্পাস', en: 'Campus' },
+  Admission: { bn: 'ভর্তি', en: 'Admission' },
+  Career: { bn: 'ক্যারিয়ার', en: 'Career' },
+  Event: { bn: 'ইভেন্ট', en: 'Event' },
 };
 
 /** Reusable card used in both Related and Latest sidebar sections. */

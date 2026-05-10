@@ -1,9 +1,31 @@
+import { useState } from 'react';
+import { Share2 } from 'lucide-react';
 import LivePlayer from '../components/LivePlayer';
 import LiveViewerBadge from '../components/LiveViewerBadge';
 import { useLiveViewers } from '../hooks/useLiveViewers';
 
+const LIVE_SHARE_URL = 'https://campustv.ac/live';
+
 export default function Live() {
   const { count, status } = useLiveViewers();
+  const [shareMsg, setShareMsg] = useState('');
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Campus TV Live',
+          url: LIVE_SHARE_URL,
+        });
+      } else {
+        await navigator.clipboard.writeText(LIVE_SHARE_URL);
+      }
+      setShareMsg('Link copied');
+      setTimeout(() => setShareMsg(''), 2000);
+    } catch {
+      setShareMsg('');
+    }
+  };
 
   return (
     <section className="min-h-screen bg-background text-foreground flex flex-col">
@@ -19,10 +41,28 @@ export default function Live() {
                 On Air
               </span>
             </div>
-            <LiveViewerBadge
-              count={count}
-              status={status}
-            />
+            <div className="flex items-center gap-2">
+              <LiveViewerBadge
+                count={count}
+                status={status}
+              />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="min-h-9 min-w-9 inline-flex items-center justify-center rounded-full border border-border bg-card text-foreground hover:border-brandRed hover:text-brandRed transition-colors"
+                  aria-label="Share live page"
+                  title="Share live page"
+                >
+                  <Share2 size={16} />
+                </button>
+                {shareMsg && (
+                  <span className="absolute right-0 top-full mt-2 whitespace-nowrap rounded-md bg-green-600 px-2 py-1 text-[11px] font-bold text-white shadow-lg">
+                    {shareMsg}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl font-black tracking-tight">

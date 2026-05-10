@@ -37,6 +37,7 @@ function RichEditor({
   initialValue = '',
   onChange,
   placeholder = 'Write here...',
+  invalid = false,
 }) {
   const editorRef = useRef(null);
 
@@ -60,7 +61,13 @@ function RichEditor({
   };
 
   return (
-    <div className="border-2 border-border rounded-xl overflow-hidden focus-within:border-brandRed transition-colors">
+    <div
+      className={`border-2 rounded-xl overflow-hidden transition-colors ${
+        invalid
+          ? 'border-red-500 focus-within:border-red-500'
+          : 'border-border focus-within:border-brandRed'
+      }`}
+    >
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-border bg-muted">
         <ToolBtn
           onClick={() => exec('bold')}
@@ -127,12 +134,30 @@ function RichEditor({
   );
 }
 
+function FieldError({ children }) {
+  if (!children) return null;
+
+  return (
+    <p className="mt-2 text-xs font-semibold text-red-500 flex items-start gap-1.5">
+      <AlertCircle
+        size={13}
+        className="mt-0.5 shrink-0"
+      />
+      <span>{children}</span>
+    </p>
+  );
+}
+
 const CATEGORIES = [
   'Features',
   'Culture',
   'Education',
   'Amar Campus',
   'Opinion',
+  'Campus',
+  'Admission',
+  'Career',
+  'Event',
 ];
 
 const CATEGORY_LABELS = {
@@ -141,6 +166,10 @@ const CATEGORY_LABELS = {
   Education: { bn: 'শিক্ষা', en: 'Education' },
   'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
   Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
+  Campus: { bn: 'ক্যাম্পাস', en: 'Campus' },
+  Admission: { bn: 'ভর্তি', en: 'Admission' },
+  Career: { bn: 'ক্যারিয়ার', en: 'Career' },
+  Event: { bn: 'ইভেন্ট', en: 'Event' },
 };
 
 const emptyForm = {
@@ -176,6 +205,7 @@ export default function AdminDashboard() {
   const [testResult, setTestResult] = useState({ primary: null, backup: null });
   const [testing, setTesting] = useState({ primary: false, backup: false });
   const [validationError, setValidationError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [publishMsg, setPublishMsg] = useState(null); // { type: 'success'|'error', text }
 
   // Change-password form state
@@ -355,6 +385,7 @@ export default function AdminDashboard() {
     setEditingId(null);
     setNews(emptyForm);
     setValidationError(null);
+    setFieldErrors({});
     setPublishMsg(null);
   };
 
@@ -363,10 +394,18 @@ export default function AdminDashboard() {
     return html.replace(/<[^>]*>/g, '').trim() === '';
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setValidationError(null);
+  const clearFieldError = (...fields) => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      fields.forEach((field) => {
+        delete next[field];
+      });
+      return next;
+    });
+  };
 
+  const validatePublishForm = () => {
+    const errors = {};
     const titleBn = news.titleBn.trim();
     const titleEn = news.titleEn.trim();
     const hasBnTitle = titleBn !== '';
@@ -375,29 +414,58 @@ export default function AdminDashboard() {
     const hasEnBody = !isRichEmpty(news.descEn);
 
     if (!hasBnTitle && !hasEnTitle) {
-      setValidationError(
-        'অন্তত একটি ভাষায় শিরোনাম লিখুন। / Enter a title in at least one language.'
-      );
-      return;
+      errors.title =
+        'Title is required. অন্তত একটি ভাষায় শিরোনাম লিখুন।';
     }
+
+    if (!hasBnBody && !hasEnBody) {
+      errors.description =
+        'Description is required. অন্তত একটি ভাষায় বিবরণ লিখুন।';
+    }
+
     if (hasBnTitle && !hasBnBody) {
-      setValidationError('বাংলা শিরোনাম আছে কিন্তু বাংলা বিবরণ নেই।');
-      return;
+      errors.descBn = 'বাংলা শিরোনাম আছে কিন্তু বাংলা বিবরণ নেই।';
     }
+
     if (!hasBnTitle && hasBnBody) {
-      setValidationError('বাংলা বিবরণ আছে কিন্তু বাংলা শিরোনাম নেই।');
-      return;
+      errors.title =
+        'বাংলা বিবরণ আছে কিন্তু বাংলা শিরোনাম নেই।';
     }
+
     if (hasEnTitle && !hasEnBody) {
-      setValidationError(
-        'English title given but English article body is missing.'
-      );
-      return;
+      errors.descEn = 'English title given but English article body is missing.';
     }
+
     if (!hasEnTitle && hasEnBody) {
-      setValidationError(
-        'English article body given but English title is missing.'
-      );
+      errors.title =
+        'English article body given but English title is missing.';
+    }
+
+    if (!news.image.trim()) {
+      errors.image = 'Image URL is required.';
+    }
+
+    if (!news.catEn || !news.catBn) {
+      errors.category = 'Category is required.';
+    }
+
+    return {
+      errors,
+      titleBn,
+      titleEn,
+    };
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setValidationError(null);
+    setFieldErrors({});
+
+    const { errors, titleBn, titleEn } = validatePublishForm();
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setValidationError('Please fix the highlighted required fields.');
       return;
     }
 
@@ -405,7 +473,7 @@ export default function AdminDashboard() {
       title: { bn: titleBn, en: titleEn },
       subtitle: { bn: news.subtitleBn || '', en: news.subtitleEn || '' },
       description: { bn: news.descBn || '', en: news.descEn || '' },
-      image: news.image,
+      image: news.image.trim(),
       secondaryImage: news.secondaryImage || '',
       imageCaption: news.imageCaption || '',
       reporterName: news.reporterName || '',
@@ -433,9 +501,12 @@ export default function AdminDashboard() {
       });
 
       if (res.ok) {
-        setPublishMsg({ type: 'success', text: 'সফলভাবে পাবলিশ হয়েছে!' });
+        setEditingId(null);
+        setNews(emptyForm);
+        setValidationError(null);
+        setFieldErrors({});
+        setPublishMsg({ type: 'success', text: 'Successfully Published' });
         setTimeout(() => setPublishMsg(null), 4000);
-        cancelEdit();
         fetchNews();
       } else if (res.status === 401 || res.status === 403) {
         handleUnauthorized();
@@ -539,6 +610,7 @@ export default function AdminDashboard() {
 
               <form
                 onSubmit={(e) => handleSubmit(e)}
+                noValidate
                 className="p-8 space-y-6"
               >
                 <p className="text-xs text-muted-foreground bg-muted rounded-lg px-4 py-2 border border-border">
@@ -547,24 +619,39 @@ export default function AdminDashboard() {
                   both.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <input
-                    type="text"
-                    placeholder="শিরোনাম (বাংলা)"
-                    className="w-full border-b-2 border-border bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none focus:border-brandRed font-bold text-lg"
-                    value={news.titleBn}
-                    onChange={(e) =>
-                      setNews({ ...news, titleBn: e.target.value })
-                    }
-                  />
-                  <input
-                    type="text"
-                    placeholder="Headline (English) — optional"
-                    className="w-full border-b-2 border-border bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none focus:border-brandRed font-bold text-lg"
-                    value={news.titleEn}
-                    onChange={(e) =>
-                      setNews({ ...news, titleEn: e.target.value })
-                    }
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="শিরোনাম (বাংলা)"
+                      className={`w-full border-b-2 bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none font-bold text-lg ${
+                        fieldErrors.title
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-border focus:border-brandRed'
+                      }`}
+                      value={news.titleBn}
+                      onChange={(e) => {
+                        clearFieldError('title');
+                        setNews({ ...news, titleBn: e.target.value });
+                      }}
+                    />
+                    <FieldError>{fieldErrors.title}</FieldError>
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Headline (English) — optional"
+                      className={`w-full border-b-2 bg-transparent text-foreground placeholder:text-muted-foreground p-3 outline-none font-bold text-lg ${
+                        fieldErrors.title
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-border focus:border-brandRed'
+                      }`}
+                      value={news.titleEn}
+                      onChange={(e) => {
+                        clearFieldError('title');
+                        setNews({ ...news, titleEn: e.target.value });
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -589,16 +676,23 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Image URL (Thumbnail)"
-                    className="w-full border-2 border-border bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none focus:border-brandRed"
-                    value={news.image}
-                    onChange={(e) =>
-                      setNews({ ...news, image: e.target.value })
-                    }
-                    required
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Image URL (Thumbnail)"
+                      className={`w-full border-2 bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none ${
+                        fieldErrors.image
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-border focus:border-brandRed'
+                      }`}
+                      value={news.image}
+                      onChange={(e) => {
+                        clearFieldError('image');
+                        setNews({ ...news, image: e.target.value });
+                      }}
+                    />
+                    <FieldError>{fieldErrors.image}</FieldError>
+                  </div>
                   <input
                     type="text"
                     placeholder="Image Caption"
@@ -635,7 +729,11 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Primary Category Selector */}
-                <div className="border-2 border-border rounded-xl p-4 space-y-3">
+                <div
+                  className={`border-2 rounded-xl p-4 space-y-3 ${
+                    fieldErrors.category ? 'border-red-500' : 'border-border'
+                  }`}
+                >
                   <p className="text-sm font-bold text-foreground">
                     Primary Category (প্রধান বিভাগ)
                   </p>
@@ -650,6 +748,7 @@ export default function AdminDashboard() {
                         catEn: selectedCat,
                         catBn: bnLabel,
                       });
+                      clearFieldError('category');
                     }}
                   >
                     {CATEGORIES.map((cat) => (
@@ -661,6 +760,7 @@ export default function AdminDashboard() {
                       </option>
                     ))}
                   </select>
+                  <FieldError>{fieldErrors.category}</FieldError>
                 </div>
 
                 {/* Categories multi-select */}
@@ -710,11 +810,16 @@ export default function AdminDashboard() {
                     <RichEditor
                       key={`bn-${editingId || 'new'}`}
                       initialValue={news.descBn}
-                      onChange={(val) =>
-                        setNews((prev) => ({ ...prev, descBn: val }))
-                      }
+                      onChange={(val) => {
+                        clearFieldError('description', 'descBn');
+                        setNews((prev) => ({ ...prev, descBn: val }));
+                      }}
                       placeholder="বিস্তারিত বর্ণনা লিখুন..."
+                      invalid={!!fieldErrors.description || !!fieldErrors.descBn}
                     />
+                    <FieldError>
+                      {fieldErrors.descBn || fieldErrors.description}
+                    </FieldError>
                   </div>
                   <div>
                     <p className="text-xs font-bold uppercase text-muted-foreground mb-2">
@@ -723,11 +828,16 @@ export default function AdminDashboard() {
                     <RichEditor
                       key={`en-${editingId || 'new'}`}
                       initialValue={news.descEn}
-                      onChange={(val) =>
-                        setNews((prev) => ({ ...prev, descEn: val }))
-                      }
+                      onChange={(val) => {
+                        clearFieldError('description', 'descEn');
+                        setNews((prev) => ({ ...prev, descEn: val }));
+                      }}
                       placeholder="Write article body in English..."
+                      invalid={!!fieldErrors.description || !!fieldErrors.descEn}
                     />
+                    <FieldError>
+                      {fieldErrors.descEn || fieldErrors.description}
+                    </FieldError>
                   </div>
                 </div>
 
@@ -805,7 +915,7 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                  <div className="flex gap-1 shrink-0">
                     <button
                       onClick={() => {
                         setEditingId(item._id);
@@ -826,7 +936,8 @@ export default function AdminDashboard() {
                         });
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="text-blue-500 p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full border border-blue-100"
+                      className="text-blue-500 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full border border-blue-100 min-h-9 min-w-9 flex items-center justify-center"
+                      aria-label="Edit news"
                     >
                       <Edit3 size={14} />
                     </button>
@@ -857,7 +968,8 @@ export default function AdminDashboard() {
                           }
                         }
                       }}
-                      className="text-brandRed p-1.5 hover:bg-red-50 rounded-full border border-red-100"
+                      className="text-brandRed p-2 hover:bg-red-50 rounded-full border border-red-100 min-h-9 min-w-9 flex items-center justify-center"
+                      aria-label="Delete news"
                     >
                       <Trash2 size={14} />
                     </button>
