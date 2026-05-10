@@ -172,6 +172,8 @@ const CATEGORY_LABELS = {
   Event: { bn: 'ইভেন্ট', en: 'Event' },
 };
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 const emptyForm = {
   titleBn: '',
   titleEn: '',
@@ -190,6 +192,7 @@ const emptyForm = {
 
 export default function AdminDashboard() {
   const [news, setNews] = useState(emptyForm);
+  const [imageFile, setImageFile] = useState(null);
   const [allNews, setAllNews] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [activeTab, setActiveTab] = useState('news'); // 'news' | 'stream' | 'security' | 'messages'
@@ -384,6 +387,7 @@ export default function AdminDashboard() {
   const cancelEdit = () => {
     setEditingId(null);
     setNews(emptyForm);
+    setImageFile(null);
     setValidationError(null);
     setFieldErrors({});
     setPublishMsg(null);
@@ -441,8 +445,10 @@ export default function AdminDashboard() {
         'English article body given but English title is missing.';
     }
 
-    if (!news.image.trim()) {
-      errors.image = 'Image URL is required.';
+    if (!imageFile && !news.image) {
+      errors.image = 'Image is required.';
+    } else if (imageFile && !ALLOWED_IMAGE_TYPES.includes(imageFile.type)) {
+      errors.image = 'Unsupported image format. Use JPG, JPEG, PNG, or WEBP.';
     }
 
     if (!news.catEn || !news.catBn) {
@@ -469,17 +475,32 @@ export default function AdminDashboard() {
       return;
     }
 
-    const payload = {
-      title: { bn: titleBn, en: titleEn },
-      subtitle: { bn: news.subtitleBn || '', en: news.subtitleEn || '' },
-      description: { bn: news.descBn || '', en: news.descEn || '' },
-      image: news.image.trim(),
-      secondaryImage: news.secondaryImage || '',
-      imageCaption: news.imageCaption || '',
-      reporterName: news.reporterName || '',
-      category: { bn: news.catBn || 'সাধারণ', en: news.catEn || 'General' },
-      categories: news.categories || [],
-    };
+    const payload = new FormData();
+    payload.append('title', JSON.stringify({ bn: titleBn, en: titleEn }));
+    payload.append(
+      'subtitle',
+      JSON.stringify({ bn: news.subtitleBn || '', en: news.subtitleEn || '' })
+    );
+    payload.append(
+      'description',
+      JSON.stringify({ bn: news.descBn || '', en: news.descEn || '' })
+    );
+    payload.append(
+      'category',
+      JSON.stringify({ bn: news.catBn || 'সাধারণ', en: news.catEn || 'General' })
+    );
+    payload.append('categories', JSON.stringify(news.categories || []));
+    payload.append('secondaryImage', news.secondaryImage || '');
+    payload.append('imageCaption', news.imageCaption || '');
+    payload.append('reporterName', news.reporterName || '');
+    payload.append('videoUrl', '');
+    payload.append('isLive', 'false');
+
+    if (imageFile) {
+      payload.append('image', imageFile);
+    } else if (news.image) {
+      payload.append('image', news.image);
+    }
 
     const url = editingId
       ? `${API_BASE}/api/news/${editingId}`
@@ -494,15 +515,15 @@ export default function AdminDashboard() {
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       if (res.ok) {
         setEditingId(null);
         setNews(emptyForm);
+        setImageFile(null);
         setValidationError(null);
         setFieldErrors({});
         setPublishMsg({ type: 'success', text: 'Successfully Published' });
@@ -678,19 +699,31 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <input
-                      type="text"
-                      placeholder="Image URL (Thumbnail)"
-                      className={`w-full border-2 bg-background text-foreground placeholder:text-muted-foreground p-3 rounded-lg outline-none ${
+                      type="file"
+                      accept="image/*"
+                      className={`w-full border-2 bg-background text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-brandRed file:px-3 file:py-2 file:text-sm file:font-bold file:text-white placeholder:text-muted-foreground p-2 rounded-lg outline-none ${
                         fieldErrors.image
                           ? 'border-red-500 focus:border-red-500'
                           : 'border-border focus:border-brandRed'
                       }`}
-                      value={news.image}
                       onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setImageFile(file);
                         clearFieldError('image');
-                        setNews({ ...news, image: e.target.value });
+                        if (file && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                          setFieldErrors((prev) => ({
+                            ...prev,
+                            image:
+                              'Unsupported image format. Use JPG, JPEG, PNG, or WEBP.',
+                          }));
+                        }
                       }}
                     />
+                    {news.image && !imageFile && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Existing image will be kept unless you choose a new file.
+                      </p>
+                    )}
                     <FieldError>{fieldErrors.image}</FieldError>
                   </div>
                   <input
@@ -919,6 +952,10 @@ export default function AdminDashboard() {
                     <button
                       onClick={() => {
                         setEditingId(item._id);
+                        setImageFile(null);
+                        setValidationError(null);
+                        setFieldErrors({});
+                        setPublishMsg(null);
                         setNews({
                           titleBn: item.title.bn,
                           titleEn: item.title.en,

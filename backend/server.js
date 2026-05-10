@@ -8,6 +8,7 @@ const youtubeRoutes = require('./routes/youtube');
 const ContactMessage = require('./models/ContactMessage');
 const { Server } = require('socket.io');
 require('dotenv').config();
+const upload = require('./middleware/upload');
 
 const app = express();
 const server = http.createServer(app);
@@ -385,9 +386,51 @@ app.get('/api/news/search', async (req, res) => {
 
 /** Sanitise & validate the categories field from a request body. */
 function parseCategories(raw) {
+  if (typeof raw === 'string') {
+    try {
+      return parseCategories(JSON.parse(raw));
+    } catch {
+      return ALLOWED_CATEGORIES.includes(raw) ? [raw] : [];
+    }
+  }
   if (!Array.isArray(raw)) return [];
   const valid = raw.filter((v) => ALLOWED_CATEGORIES.includes(v));
   return [...new Set(valid)];
+}
+
+function parseJsonField(raw, fallback) {
+  if (typeof raw !== 'string') return raw || fallback;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeNewsBody(req) {
+  const body = { ...req.body };
+  body.title = parseJsonField(body.title, {});
+  body.subtitle = parseJsonField(body.subtitle, {});
+  body.description = parseJsonField(body.description, {});
+  body.category = parseJsonField(body.category, {});
+  body.categories = parseCategories(body.categories);
+  body.videoUrl = '';
+  body.isLive = false;
+
+  if (req.file?.path) {
+    body.image = req.file.path;
+  }
+
+  return body;
+}
+
+function uploadNewsImage(req, res, next) {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
 }
 
 /** Strip HTML tags to check whether rich-text content is effectively empty. */
@@ -430,10 +473,9 @@ function validateNewsPayload(body) {
   return null;
 }
 
-app.post('/api/news', requireAdmin, async (req, res) => {
+app.post('/api/news', requireAdmin, uploadNewsImage, async (req, res) => {
   try {
-    const categories = parseCategories(req.body.categories);
-    const body = { ...req.body, videoUrl: '', isLive: false, categories };
+    const body = normalizeNewsBody(req);
 
     const validationError = validateNewsPayload(body);
     if (validationError) {
@@ -515,10 +557,10 @@ app.put(
   '/api/news/:id',
   requireAdmin,
   ensureValidObjectId,
+  uploadNewsImage,
   async (req, res) => {
     try {
-      const categories = parseCategories(req.body.categories);
-      const body = { ...req.body, videoUrl: '', isLive: false, categories };
+      const body = normalizeNewsBody(req);
 
       const validationError = validateNewsPayload(body);
       if (validationError) {
