@@ -12,6 +12,8 @@ import {
   AlertCircle,
   KeyRound,
   Inbox,
+  Upload,
+  Loader2,
 } from 'lucide-react';
 import Loader from '../components/ui/Loader';
 import AdminMessages from '../components/AdminMessages';
@@ -210,6 +212,7 @@ export default function AdminDashboard() {
   const [validationError, setValidationError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [publishMsg, setPublishMsg] = useState(null); // { type: 'success'|'error', text }
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Change-password form state
   const [pwForm, setPwForm] = useState({
@@ -464,6 +467,7 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isPublishing) return;
     setValidationError(null);
     setFieldErrors({});
 
@@ -512,6 +516,7 @@ export default function AdminDashboard() {
         handleUnauthorized();
         return;
       }
+      setIsPublishing(true);
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
         headers: {
@@ -540,6 +545,8 @@ export default function AdminDashboard() {
       }
     } catch {
       setPublishMsg({ type: 'error', text: 'সার্ভার কানেকশনে সমস্যা!' });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -698,27 +705,59 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className={`w-full border-2 bg-background text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-brandRed file:px-3 file:py-2 file:text-sm file:font-bold file:text-white placeholder:text-muted-foreground p-2 rounded-lg outline-none ${
+                    <label
+                      className={`flex min-h-24 w-full cursor-pointer items-center gap-4 rounded-lg border-2 bg-background p-4 transition-colors focus-within:ring-2 focus-within:ring-brandRed/30 ${
                         fieldErrors.image
-                          ? 'border-red-500 focus:border-red-500'
-                          : 'border-border focus:border-brandRed'
+                          ? 'border-red-500'
+                          : imageFile
+                            ? 'border-green-500 bg-green-500/5'
+                            : 'border-border hover:border-brandRed'
                       }`}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setImageFile(file);
-                        clearFieldError('image');
-                        if (file && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
-                          setFieldErrors((prev) => ({
-                            ...prev,
-                            image:
-                              'Unsupported image format. Use JPG, JPEG, PNG, or WEBP.',
-                          }));
-                        }
-                      }}
-                    />
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        aria-label="Upload news image"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setImageFile(file);
+                          clearFieldError('image');
+                          if (file && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              image:
+                                'Unsupported image format. Use JPG, JPEG, PNG, or WEBP.',
+                            }));
+                          }
+                        }}
+                      />
+                      <span
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                          imageFile
+                            ? 'bg-green-600 text-white'
+                            : 'bg-muted text-brandRed'
+                        }`}
+                      >
+                        {imageFile ? (
+                          <CheckCircle2 size={20} />
+                        ) : (
+                          <Upload size={20} />
+                        )}
+                      </span>
+                      <span className="min-w-0">
+                        <span
+                          className={`block truncate text-sm font-black ${
+                            imageFile ? 'text-green-600' : 'text-foreground'
+                          }`}
+                        >
+                          {imageFile ? imageFile.name : 'Upload Image'}
+                        </span>
+                        <span className="block text-xs font-semibold text-muted-foreground">
+                          JPG, PNG, WEBP supported
+                        </span>
+                      </span>
+                    </label>
                     {news.image && !imageFile && (
                       <p className="mt-2 text-xs text-muted-foreground">
                         Existing image will be kept unless you choose a new file.
@@ -907,9 +946,20 @@ export default function AdminDashboard() {
                 )}
                 <button
                   type="submit"
-                  className={`w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed`}
+                  disabled={isPublishing}
+                  className={`w-full p-4 font-black rounded-xl text-white transition-all uppercase shadow-xl flex items-center justify-center gap-2 bg-brandBlack hover:bg-brandRed disabled:cursor-not-allowed disabled:opacity-70`}
                 >
-                  {editingId ? 'Update Post' : 'Publish News'}
+                  {isPublishing && (
+                    <Loader2
+                      size={18}
+                      className="animate-spin"
+                    />
+                  )}
+                  {isPublishing
+                    ? 'Publishing...'
+                    : editingId
+                      ? 'Update Post'
+                      : 'Publish News'}
                 </button>
               </form>
             </div>
