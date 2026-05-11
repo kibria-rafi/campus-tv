@@ -206,7 +206,15 @@ function ensureValidObjectId(req, res, next) {
   return next();
 }
 
-app.post('/api/admin/login', async (req, res) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please try again later.' },
+});
+
+app.post('/api/admin/login', loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -301,6 +309,7 @@ app.get('/api/news', async (req, res) => {
     const parsedLimit = req.query.limit ? parseInt(req.query.limit, 10) : null;
     const limit =
       Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const category = req.query.category; // Filter by category
     const summaryOnly =
       req.query.summary === '1' || req.query.summary === 'true';
@@ -325,7 +334,8 @@ app.get('/api/news', async (req, res) => {
     }
 
     if (limit && limit > 0) {
-      query = query.limit(limit);
+      const skip = (page - 1) * limit;
+      query = query.skip(skip).limit(limit);
     }
 
     const news = await query;
@@ -795,6 +805,12 @@ app.put('/api/admin/stream-settings', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Global Error Handler ─────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('[Global Error]', err);
+  res.status(500).json({ success: false, message: 'Internal Server Error' });
+});
+
 const startServer = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -852,6 +868,10 @@ const startServer = async () => {
   } catch (err) {
     console.error('❌ MongoDB Connection Error:', err);
     process.exit(1);
+  }
+};
+
+startServer();
   }
 };
 

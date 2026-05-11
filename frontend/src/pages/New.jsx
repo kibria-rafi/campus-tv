@@ -64,56 +64,68 @@ function EmptyState({ lang }) {
 
 export default function New({ lang }) {
   const [newsList, setNewsList] = useState([]);
-  const [allNews, setAllNews] = useState([]); // Store all news for filtering
   const [loading, setLoading] = useState(true);
-  const [limit, setLimit] = useState(9);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null); // null = all categories
   const t = translations[lang];
 
-  const fetchNews = async () => {
+  const fetchNews = async (targetPage = 1, category = null, isLoadMore = false) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12000);
     try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/api/news?limit=120&summary=1`, {
-        signal: controller.signal,
-      });
+      if (isLoadMore) setLoadingMore(true);
+      else setLoading(true);
+
+      let url = `${API_BASE}/api/news?limit=12&page=${targetPage}&summary=1`;
+      if (category) {
+        url += `&category=${encodeURIComponent(category)}`;
+      }
+
+      const res = await fetch(url, { signal: controller.signal });
       const data = await res.json();
-      setAllNews(data);
-      setNewsList(data);
+      
+      if (data.length < 12) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+
+      if (isLoadMore) {
+        setNewsList((prev) => [...prev, ...data]);
+      } else {
+        setNewsList(data);
+      }
+      setPage(targetPage);
     } catch (err) {
-      console.error('Error fetching news:', err);
-      setAllNews([]);
-      setNewsList([]);
+      if (err.name !== 'AbortError') {
+        console.error('Error fetching news:', err);
+      }
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchNews();
-  }, []);
+    fetchNews(1, selectedCategory, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
   const handleCategoryClick = (category) => {
     if (selectedCategory === category) {
-      // Deselect if clicking the same category
       setSelectedCategory(null);
-      setNewsList(allNews);
-      setLimit(9);
     } else {
-      // Filter by selected category
       setSelectedCategory(category);
-      const filtered = allNews.filter((item) =>
-        (item.categories || []).includes(category)
-      );
-      setNewsList(filtered);
-      setLimit(9);
     }
   };
 
   const handleLoadMore = () => {
-    setLimit(newsList.length);
+    if (!loadingMore && hasMore) {
+      fetchNews(page + 1, selectedCategory, true);
+    }
   };
 
   const handleImageError = (e) => {
@@ -151,8 +163,6 @@ export default function New({ lang }) {
           <button
             onClick={() => {
               setSelectedCategory(null);
-              setNewsList(allNews);
-              setLimit(9);
             }}
             className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
               selectedCategory === null
@@ -189,7 +199,7 @@ export default function New({ lang }) {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {newsList.slice(0, limit).map((news) => (
+            {newsList.map((news) => (
               <Link
                 key={news._id}
                 to={`/news/${news._id}`}
@@ -232,13 +242,14 @@ export default function New({ lang }) {
             ))}
           </div>
 
-          {newsList.length > 9 && limit < newsList.length && (
+          {hasMore && (
             <div className="flex justify-center mt-8">
               <button
                 onClick={handleLoadMore}
-                className="px-8 py-3 bg-brandRed text-white font-bold rounded-md hover:bg-red-700 transition-all duration-300 hover:shadow-lg transform hover:scale-105 uppercase text-sm"
+                disabled={loadingMore}
+                className="px-8 py-3 bg-brandRed text-white font-bold rounded-md hover:bg-red-700 transition-all duration-300 hover:shadow-lg transform hover:scale-105 uppercase text-sm disabled:opacity-50"
               >
-                {t.seeMore}
+                {loadingMore ? 'Loading...' : t.seeMore}
               </button>
             </div>
           )}

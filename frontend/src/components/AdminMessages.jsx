@@ -28,17 +28,29 @@ export default function AdminMessages({ onUnreadRefresh }) {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState(null); // { type: 'success'|'error', text }
   const [expandedId, setExpandedId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const navigate = useNavigate();
 
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async (isLoadMore = false, targetPage = 1) => {
     try {
+      if (isLoadMore) setLoadingMore(true);
+      else setLoading(true);
+
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API_BASE}/api/admin/messages`, {
+      const res = await fetch(`${API_BASE}/api/admin/messages?page=${targetPage}&limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setMessages(data);
+        if (isLoadMore) {
+          setMessages((prev) => [...prev, ...data.messages]);
+        } else {
+          setMessages(data.messages);
+        }
+        setPage(data.page);
+        setTotalPages(data.totalPages);
       } else if (res.status === 401 || res.status === 403) {
         localStorage.removeItem('adminToken');
         navigate('/admin');
@@ -55,6 +67,7 @@ export default function AdminMessages({ onUnreadRefresh }) {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [navigate]);
 
@@ -126,13 +139,12 @@ export default function AdminMessages({ onUnreadRefresh }) {
   };
 
   const handleRefresh = async () => {
-    setLoading(true);
     setNotice(null);
-    await fetchMessages();
+    await fetchMessages(false, 1);
     onUnreadRefresh?.();
   };
 
-  if (loading) {
+  if (loading && !loadingMore) {
     return (
       <div className="flex justify-center items-center py-20">
         <Loader />
@@ -149,8 +161,7 @@ export default function AdminMessages({ onUnreadRefresh }) {
             <Inbox size={20} />
             <span>Contact Inbox</span>
             <span className="text-xs font-normal normal-case opacity-70">
-              ({messages.length} total,{' '}
-              {messages.filter((m) => !m.isRead).length} unread)
+              ({messages.length} loaded)
             </span>
           </div>
           <button
@@ -291,6 +302,17 @@ export default function AdminMessages({ onUnreadRefresh }) {
                 )}
               </div>
             ))}
+            {page < totalPages && (
+              <div className="p-4 flex justify-center border-t border-border">
+                <button
+                  onClick={() => fetchMessages(true, page + 1)}
+                  disabled={loadingMore}
+                  className="px-6 py-2 rounded-full bg-muted text-foreground font-bold hover:bg-card border border-border transition-colors disabled:opacity-50"
+                >
+                  {loadingMore ? 'Loading...' : 'Load Older Messages'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -187,6 +187,7 @@ export default function Home({ lang }) {
                 src={newsList[0].image}
                 className="w-full h-60 md:h-72 lg:h-full object-cover transition group-hover:scale-105 duration-500"
                 alt={pickLang(newsList[0].title, lang)}
+                onError={(e) => { e.target.src = '/logo.png'; e.target.onerror = null; }}
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
