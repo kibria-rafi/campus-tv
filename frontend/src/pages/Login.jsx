@@ -7,31 +7,47 @@ export default function Login({ lang }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginMsg, setLoginMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const isBn = lang === 'bn';
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoginMsg(null);
-    let res;
+    setLoading(true);
+
     try {
-      res = await fetch(`${API_BASE}/api/admin/login`, {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-    } catch {
-      setLoginMsg({ type: 'error', text: isBn ? 'সার্ভারের সাথে সংযোগ করা যায়নি।' : 'Server connection error.' });
-      return;
-    }
-    let data;
-    try { data = await res.json(); } catch { data = {}; }
 
-    if (data.success) {
-      localStorage.setItem('adminToken', data.token);
-      navigate('/dashboard');
-    } else {
-      setLoginMsg({ type: 'error', text: isBn ? 'ইউজারনেম বা পাসওয়ার্ড ভুল।' : 'Invalid username or password.' });
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+
+      if (data.success) {
+        localStorage.setItem('adminToken', data.token);
+        navigate('/dashboard');
+      } else {
+        setLoginMsg({
+          type: 'error',
+          text: isBn ? 'ইউজারনেম বা পাসওয়ার্ড ভুল।' : 'Invalid username or password.',
+        });
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('[Login] Error:', err);
+      setLoginMsg({
+        type: 'error',
+        text: isBn ? 'সার্ভারের সাথে সংযোগ করা যায়নি।' : 'Server connection error.',
+      });
+      setLoading(false);
     }
   };
 
@@ -40,10 +56,7 @@ export default function Login({ lang }) {
       <h2 className="text-3xl font-black text-center text-foreground mb-6 uppercase italic">
         {isBn ? 'অ্যাডমিন লগইন' : 'Admin Login'}
       </h2>
-      <form
-        onSubmit={handleLogin}
-        className="space-y-4"
-      >
+      <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-sm font-bold mb-1 text-foreground">
             {isBn ? 'ইউজারনেম' : 'Username'}
@@ -71,11 +84,13 @@ export default function Login({ lang }) {
           />
         </div>
         {loginMsg && (
-          <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold ${
-            loginMsg.type === 'error'
-              ? 'bg-red-500/10 border border-red-500/30 text-red-500'
-              : 'bg-green-500/10 border border-green-500/30 text-green-600'
-          }`}>
+          <div
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold ${
+              loginMsg.type === 'error'
+                ? 'bg-red-500/10 border border-red-500/30 text-red-500'
+                : 'bg-green-500/10 border border-green-500/30 text-green-600'
+            }`}
+          >
             <AlertCircle size={16} />
             {loginMsg.text}
           </div>
@@ -88,9 +103,13 @@ export default function Login({ lang }) {
           }`}
         >
           {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-          {loading 
-            ? (isBn ? 'প্রবেশ করা হচ্ছে...' : 'Logging in...') 
-            : (isBn ? 'প্রবেশ করুন' : 'Login')}
+          {loading
+            ? isBn
+              ? 'প্রবেশ করা হচ্ছে...'
+              : 'Logging in...'
+            : isBn
+            ? 'প্রবেশ করুন'
+            : 'Login'}
         </button>
       </form>
     </div>
