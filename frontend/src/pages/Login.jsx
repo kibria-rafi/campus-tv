@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { API_BASE } from '../config/api';
 
 export default function Login({ lang }) {
@@ -82,9 +82,15 @@ export default function Login({ lang }) {
         )}
         <button
           type="submit"
-          className="w-full bg-brandRed text-white font-bold py-2 rounded hover:bg-red-700 transition uppercase italic"
+          disabled={loading}
+          className={`w-full bg-brandRed text-white font-bold py-2 rounded transition uppercase italic flex items-center justify-center gap-2 ${
+            loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-red-700'
+          }`}
         >
-          {isBn ? 'প্রবেশ করুন' : 'Login'}
+          {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+          {loading 
+            ? (isBn ? 'প্রবেশ করা হচ্ছে...' : 'Logging in...') 
+            : (isBn ? 'প্রবেশ করুন' : 'Login')}
         </button>
       </form>
     </div>
