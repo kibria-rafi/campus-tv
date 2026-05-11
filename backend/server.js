@@ -253,6 +253,10 @@ app.post('/api/admin/login', loginLimiter, async (req, res) => {
   }
 });
 
+app.get('/api/admin/verify', requireAdmin, (req, res) => {
+  res.json({ success: true, authenticated: true });
+});
+
 app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
