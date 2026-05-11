@@ -9,6 +9,7 @@ const ContactMessage = require('./models/ContactMessage');
 const { Server } = require('socket.io');
 require('dotenv').config();
 const upload = require('./middleware/upload');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const server = http.createServer(app);
