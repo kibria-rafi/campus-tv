@@ -44,13 +44,19 @@ export default function AdminMessages({ onUnreadRefresh }) {
       });
       if (res.ok) {
         const data = await res.json();
+        
+        // Defensive fallback in case backend returns unexpected shape
+        const fetchedMessages = Array.isArray(data?.messages) 
+          ? data.messages 
+          : (Array.isArray(data) ? data : []);
+
         if (isLoadMore) {
-          setMessages((prev) => [...prev, ...data.messages]);
+          setMessages((prev) => [...(prev || []), ...fetchedMessages]);
         } else {
-          setMessages(data.messages);
+          setMessages(fetchedMessages);
         }
-        setPage(data.page);
-        setTotalPages(data.totalPages);
+        setPage(data?.page || 1);
+        setTotalPages(data?.totalPages || 1);
       } else if (res.status === 401 || res.status === 403) {
         localStorage.removeItem('adminToken');
         navigate('/admin');
@@ -60,7 +66,8 @@ export default function AdminMessages({ onUnreadRefresh }) {
           text: `Failed to load messages (HTTP ${res.status}).`,
         });
       }
-    } catch {
+    } catch (err) {
+      console.error('[AdminMessages] Failed to fetch messages:', err);
       setNotice({
         type: 'error',
         text: 'Network error — could not load messages.',
@@ -117,7 +124,8 @@ export default function AdminMessages({ onUnreadRefresh }) {
         } else {
           setNotice({ type: 'error', text: 'Failed to delete message.' });
         }
-      } catch {
+      } catch (err) {
+        console.error('[AdminMessages] Failed to delete message:', err);
         setNotice({
           type: 'error',
           text: 'Network error — could not delete message.',

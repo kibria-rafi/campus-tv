@@ -665,10 +665,22 @@ app.post('/api/contact', async (req, res) => {
 // ── Contact Messages Admin routes ─────────────────────────────────────────
 
 // GET all messages, newest first
-app.get('/api/admin/messages', requireAdmin, async (_req, res) => {
+app.get('/api/admin/messages', requireAdmin, async (req, res) => {
   try {
-    const messages = await ContactMessage.find().sort({ createdAt: -1 });
-    return res.json(messages);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [messages, total] = await Promise.all([
+      ContactMessage.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      ContactMessage.countDocuments()
+    ]);
+
+    return res.json({
+      messages,
+      page,
+      totalPages: Math.ceil(total / limit) || 1
+    });
   } catch (err) {
     console.error('[Messages] GET error:', err);
     return res.status(500).json({ error: 'Failed to fetch messages.' });

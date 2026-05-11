@@ -242,7 +242,8 @@ export default function AdminDashboard() {
       } else if (res.status === 401 || res.status === 403) {
         handleUnauthorized();
       }
-    } catch {
+    } catch (err) {
+      console.error('[AdminDashboard] Failed to fetch unread count:', err);
       // silent — badge stays at last known value
     }
   }, [handleUnauthorized]);
