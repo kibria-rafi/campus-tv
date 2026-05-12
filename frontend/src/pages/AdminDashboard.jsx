@@ -207,8 +207,6 @@ export default function AdminDashboard() {
   });
   const [streamSaving, setStreamSaving] = useState(false);
   const [streamMsg, setStreamMsg] = useState(null); // { type: 'success'|'error', text }
-  const [testResult, setTestResult] = useState({ primary: null, backup: null });
-  const [testing, setTesting] = useState({ primary: false, backup: false });
   const [validationError, setValidationError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [publishMsg, setPublishMsg] = useState(null); // { type: 'success'|'error', text }
@@ -321,7 +319,6 @@ export default function AdminDashboard() {
           primaryM3u8: data.primaryM3u8 || '',
           backupM3u8: data.backupM3u8 || '',
         });
-        setTestResult({ primary: null, backup: null });
       } else if (res.status === 401 || res.status === 403) {
         handleUnauthorized();
       } else {
@@ -337,44 +334,6 @@ export default function AdminDashboard() {
       });
     } finally {
       setStreamSaving(false);
-    }
-  };
-
-  const handleTestUrl = async (field) => {
-    const url =
-      field === 'primary' ? streamForm.primaryM3u8 : streamForm.backupM3u8;
-    if (!url.trim()) return;
-    setTesting((t) => ({ ...t, [field]: true }));
-    setTestResult((r) => ({ ...r, [field]: null }));
-    try {
-      // Use no-cors so the fetch doesn't throw on CORS-blocked responses
-      const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 10000);
-      const res = await fetch(url.trim(), {
-        method: 'HEAD',
-        signal: controller.signal,
-        mode: 'no-cors',
-      });
-      clearTimeout(tid);
-      // no-cors always gives opaque response (status 0) even on success
-      setTestResult((r) => ({
-        ...r,
-        [field]: {
-          ok: true,
-          note:
-            res.status === 0
-              ? 'Request sent (opaque response — likely reachable)'
-              : `HTTP ${res.status}`,
-        },
-      }));
-    } catch (err) {
-      const msg =
-        err.name === 'AbortError'
-          ? 'Timed out (10 s)'
-          : err.message || 'Unreachable';
-      setTestResult((r) => ({ ...r, [field]: { ok: false, note: msg } }));
-    } finally {
-      setTesting((t) => ({ ...t, [field]: false }));
     }
   };
 
@@ -1097,32 +1056,10 @@ export default function AdminDashboard() {
                         ...f,
                         primaryM3u8: e.target.value,
                       }));
-                      setTestResult((r) => ({ ...r, primary: null }));
                     }}
                     required
                   />
-                  <button
-                    type="button"
-                    disabled={!streamForm.primaryM3u8.trim() || testing.primary}
-                    onClick={() => handleTestUrl('primary')}
-                    className="px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-card border border-border font-bold text-xs uppercase transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
-                  >
-                    {testing.primary ? <Loader size="sm" /> : null}
-                    Test
-                  </button>
                 </div>
-                {testResult.primary && (
-                  <p
-                    className={`text-xs flex items-center gap-1.5 font-semibold ${testResult.primary.ok ? 'text-green-500' : 'text-red-400'}`}
-                  >
-                    {testResult.primary.ok ? (
-                      <CheckCircle2 size={13} />
-                    ) : (
-                      <AlertCircle size={13} />
-                    )}
-                    {testResult.primary.note}
-                  </p>
-                )}
               </div>
 
               {/* Backup M3U8 */}
@@ -1144,31 +1081,9 @@ export default function AdminDashboard() {
                         ...f,
                         backupM3u8: e.target.value,
                       }));
-                      setTestResult((r) => ({ ...r, backup: null }));
                     }}
                   />
-                  <button
-                    type="button"
-                    disabled={!streamForm.backupM3u8.trim() || testing.backup}
-                    onClick={() => handleTestUrl('backup')}
-                    className="px-4 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-card border border-border font-bold text-xs uppercase transition-all disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
-                  >
-                    {testing.backup ? <Loader size="sm" /> : null}
-                    Test
-                  </button>
                 </div>
-                {testResult.backup && (
-                  <p
-                    className={`text-xs flex items-center gap-1.5 font-semibold ${testResult.backup.ok ? 'text-green-500' : 'text-red-400'}`}
-                  >
-                    {testResult.backup.ok ? (
-                      <CheckCircle2 size={13} />
-                    ) : (
-                      <AlertCircle size={13} />
-                    )}
-                    {testResult.backup.note}
-                  </p>
-                )}
               </div>
 
               {/* Playback priority note */}
