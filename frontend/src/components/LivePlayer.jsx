@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import VideoJsPlayer from './VideoJsPlayer';
+import { useState, useCallback, useEffect, Suspense, lazy } from 'react';
+const VideoJsPlayer = lazy(() => import('./VideoJsPlayer'));
 import YouTubeArchivePlayer from './YouTubeArchivePlayer';
 import { useStreamSettings } from '../hooks/useStreamSettings';
 import Loader from './ui/Loader';
@@ -143,12 +143,23 @@ export default function LivePlayer({
             />
           </div>
         ) : mode === 'live' ? (
-          <VideoJsPlayer
-            key={liveKey}
-            src={activeSrc}
-            title={title}
-            onFallback={handleFallback}
-          />
+          <Suspense
+            fallback={
+              <div className="aspect-video w-full rounded-xl bg-muted flex items-center justify-center">
+                <Loader
+                  size="md"
+                  className="text-brandRed"
+                />
+              </div>
+            }
+          >
+            <VideoJsPlayer
+              key={liveKey}
+              src={activeSrc}
+              title={title}
+              onFallback={handleFallback}
+            />
+          </Suspense>
         ) : (
           <>
             <YouTubeArchivePlayer />
