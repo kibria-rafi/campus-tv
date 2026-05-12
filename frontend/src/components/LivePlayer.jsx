@@ -143,11 +143,6 @@ export default function LivePlayer({
           />
         ) : (
           <>
-            {fallbackReason && (
-              <p className="text-yellow-400/80 text-xs mb-2 px-1">
-                Live stream unavailable ({fallbackReason}) — showing archive.
-              </p>
-            )}
             <YouTubeArchivePlayer />
           </>
         )}
