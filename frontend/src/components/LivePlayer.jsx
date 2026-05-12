@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import VideoJsPlayer from './VideoJsPlayer';
 import YouTubeArchivePlayer from './YouTubeArchivePlayer';
 import { useStreamSettings } from '../hooks/useStreamSettings';
@@ -14,12 +14,14 @@ import Loader from './ui/Loader';
  * endpoint via the shared useStreamSettings hook (cached, one fetch per page load).
  *
  * Props:
- *   title    {string}  – display title (default "Live Stream")
- *   variant  {string}  – 'compact' (homepage) | 'full' (live page)
+ *   title        {string}    – display title (default "Live Stream")
+ *   variant      {string}    – 'compact' (homepage) | 'full' (live page)
+ *   onModeChange {function}  – callback when mode changes ('live' | 'archive')
  */
 export default function LivePlayer({
   title = 'Live Stream',
   variant = 'compact',
+  onModeChange,
 }) {
   const { settings, loading } = useStreamSettings();
 
@@ -36,6 +38,12 @@ export default function LivePlayer({
   // Key forces full remount of VideoJsPlayer when switching source or retrying
   const [liveKey, setLiveKey] = useState(0);
   const [fallbackReason, setFallbackReason] = useState('');
+
+  useEffect(() => {
+    if (onModeChange) {
+      onModeChange(mode);
+    }
+  }, [mode, onModeChange]);
 
   const activeSrc =
     mode === 'live' && streamPhase === 'backup' && backupSrc

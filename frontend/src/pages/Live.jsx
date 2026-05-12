@@ -9,6 +9,7 @@ const LIVE_SHARE_URL = 'https://campustv.ac/live';
 export default function Live() {
   const { count, status } = useLiveViewers();
   const [shareMsg, setShareMsg] = useState('');
+  const [streamMode, setStreamMode] = useState('live');
 
   const handleShare = async () => {
     try {
@@ -45,6 +46,7 @@ export default function Live() {
               <LiveViewerBadge
                 count={count}
                 status={status}
+                streamMode={streamMode}
               />
               <div className="relative">
                 <button
@@ -77,6 +79,7 @@ export default function Live() {
           <LivePlayer
             title="Live Stream"
             variant="full"
+            onModeChange={setStreamMode}
           />
         </div>
 
