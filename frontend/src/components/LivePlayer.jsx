@@ -115,13 +115,13 @@ export default function LivePlayer({
         {mode === 'archive' && (
           <button
             onClick={handleTryLiveAgain}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition"
+            className="w-full sm:w-auto sm:ml-auto flex items-center justify-center sm:justify-start gap-2 sm:gap-1.5 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-red-800 hover:bg-red-700 text-white text-sm sm:text-xs font-semibold transition-colors shadow-sm"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-3.5 h-3.5"
+              className="w-4 h-4 sm:w-3.5 sm:h-3.5"
             >
               <path
                 fillRule="evenodd"
