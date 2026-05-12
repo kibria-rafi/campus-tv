@@ -208,6 +208,7 @@ export default function New({ lang }) {
                 <div className="overflow-hidden shrink-0 relative">
                   <img
                     src={news.image || '/logo.png'}
+                    loading="lazy"
                     className="w-full h-48 object-cover group-hover:brightness-90 group-hover:scale-110 transition duration-500"
                     alt={pickLang(news.title, lang)}
                     onError={handleImageError}

@@ -45,6 +45,7 @@ function SidebarNewsCard({
         <img
           src={item.image || getYouTubeThumbnail(item.videoUrl)}
           alt={pickLang(item.title, lang)}
+          loading="lazy"
           className="w-20 h-20 object-cover rounded-lg group-hover:brightness-90 transition"
           onError={handleImageError}
         />
@@ -401,6 +402,7 @@ export default function NewsDetails({ lang }) {
                     <img
                       src={news.secondaryImage}
                       alt="Secondary illustration"
+                      loading="lazy"
                       className="w-full h-auto object-cover rounded-lg shadow-lg border border-border"
                       onError={handleImageError}
                     />

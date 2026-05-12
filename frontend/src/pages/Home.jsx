@@ -97,15 +97,21 @@ export default function Home({ lang }) {
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader
-          size="lg"
-          className="text-brandRed"
-        />
-      </div>
-    );
+  const NewsSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:auto-rows-[260px]">
+      <div className="md:col-span-2 lg:col-span-2 h-60 md:h-72 lg:h-full bg-muted animate-pulse rounded-sm"></div>
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="flex flex-col h-40 md:h-auto bg-card border border-border rounded-sm animate-pulse">
+          <div className="h-40 bg-muted shrink-0"></div>
+          <div className="p-3 flex-1">
+            <div className="h-3 w-1/3 bg-muted rounded mb-2"></div>
+            <div className="h-4 w-full bg-muted rounded mb-1"></div>
+            <div className="h-4 w-2/3 bg-muted rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -173,7 +179,9 @@ export default function Home({ lang }) {
           {t.latest}
         </h3>
 
-        {newsList.length === 0 ? (
+        {loading ? (
+          <NewsSkeleton />
+        ) : newsList.length === 0 ? (
           <div className="text-center py-20 text-foreground opacity-60">
             এখনো কোনো খবর নেই।
           </div>
@@ -218,8 +226,10 @@ export default function Home({ lang }) {
                 <div className="overflow-hidden shrink-0">
                   <img
                     src={news.image}
+                    loading="lazy"
                     className="w-full h-40 object-cover group-hover:brightness-90 group-hover:scale-105 transition duration-300"
                     alt={pickLang(news.title, lang)}
+                    onError={(e) => { e.target.src = '/logo.png'; e.target.onerror = null; }}
                   />
                 </div>
                 <div className="p-3 flex flex-col flex-1">

@@ -10,18 +10,18 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BottomNav from './components/BottomNav';
 import ScrollToTop from './components/ScrollToTop';
-import Home from './pages/Home';
-import NewsDetails from './pages/NewsDetails';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import AboutUs from './pages/AboutUs';
 
-import Live from './pages/Live';
-import VideoArchive from './pages/VideoArchive';
-import Contact from './pages/Contact';
-import New from './pages/New';
-import SearchPage from './pages/SearchPage';
-import CampusRadio from './pages/CampusRadio';
+const Home = lazy(() => import('./pages/Home'));
+const NewsDetails = lazy(() => import('./pages/NewsDetails'));
+const Login = lazy(() => import('./pages/Login'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const Live = lazy(() => import('./pages/Live'));
+const VideoArchive = lazy(() => import('./pages/VideoArchive'));
+const Contact = lazy(() => import('./pages/Contact'));
+const New = lazy(() => import('./pages/New'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
+const CampusRadio = lazy(() => import('./pages/CampusRadio'));
 
 const ProtectedRoute = ({ children }) => {
   const [isValid, setIsValid] = useState(() => {
