@@ -2,7 +2,7 @@
 
 A full-stack university broadcasting platform with live TV streaming, news publishing, YouTube video archives, and an admin dashboard.
 
-🌐 **Live:** [https://campus-tv.onrender.com](https://campus-tv.onrender.com)
+🌐 **Live:** [https://campustv.ac](https://campustv.ac)
 
 ---
 
