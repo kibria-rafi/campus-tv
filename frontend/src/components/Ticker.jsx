@@ -3,9 +3,9 @@ import { pickLang } from '../utils/lang';
 
 function getMarqueeDuration() {
   const w = window.innerWidth;
-  if (w < 640) return '12s';
-  if (w < 1024) return '18s';
-  return '30s';
+  if (w < 640) return '6s';
+  if (w < 1024) return '14s';
+  return '24s';
 }
 
 export default function Ticker({ lang, newsList }) {
