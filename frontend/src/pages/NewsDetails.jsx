@@ -9,9 +9,9 @@ import {
   Plus,
   Minus,
   Facebook,
-  Link as LinkIcon,
   Share2,
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { API_BASE } from '../config/api';
 import Loader from '../components/ui/Loader';
 import { pickLang, stripHtml } from '../utils/lang';
@@ -222,6 +222,14 @@ export default function NewsDetails({ lang }) {
     alert(lang === 'bn' ? 'লিঙ্ক কপি হয়েছে!' : 'Link copied!');
   };
 
+  const shareOnWhatsApp = () => {
+    const url = window.location.href;
+    const titleText = pickLang(news.title, lang) || '';
+    const encodedTitle = encodeURIComponent(titleText);
+    const encodedUrl = encodeURIComponent(url);
+    window.open(`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`, '_blank');
+  };
+
   const handleShare = async () => {
     const titleText = pickLang(news.title, lang);
     const subtitleText = pickLang(news.subtitle, lang);
@@ -304,14 +312,12 @@ export default function NewsDetails({ lang }) {
                   <span className="hidden sm:inline">Facebook</span>
                 </button>
                 <button
-                  onClick={copyLink}
-                  className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition font-semibold text-sm"
-                  aria-label="Copy link"
+                  onClick={shareOnWhatsApp}
+                  className="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-lg hover:bg-[#128C7E] transition font-semibold text-sm"
+                  aria-label="Share on WhatsApp"
                 >
-                  <LinkIcon size={16} />
-                  <span className="hidden sm:inline">
-                    {lang === 'bn' ? 'লিঙ্ক' : 'Link'}
-                  </span>
+                  <FaWhatsapp size={16} />
+                  <span className="hidden sm:inline">WhatsApp</span>
                 </button>
                 <button
                   onClick={handleShare}
