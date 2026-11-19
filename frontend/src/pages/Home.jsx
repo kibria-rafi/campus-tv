@@ -98,21 +98,42 @@ export default function Home({ lang }) {
     };
   }, []);
 
-  const handleCategoryClick = (category) => {
+  const handleCategoryClick = async (category) => {
     if (selectedCategory === category) {
       // Deselect if clicking the same category
       setSelectedCategory(null);
       setNewsList(allNews);
       setVisibleCount(11);
-    } else {
-      // Filter by selected category
-      setSelectedCategory(category);
-      const filtered = allNews.filter((item) =>
-        (item.categories || []).includes(category)
-      );
-      setNewsList(filtered);
-      setVisibleCount(11);
+      return;
     }
+
+    setSelectedCategory(category);
+    setVisibleCount(11);
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/news?category=${encodeURIComponent(category)}&limit=30&summary=1`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const articles = data.filter(
+          (item) =>
+            !item.videoUrl ||
+            item.videoUrl.trim() === '' ||
+            item.isLive === true
+        );
+        setNewsList(articles);
+        return;
+      }
+    } catch (err) {
+      console.warn('[Category] Fetch failed, falling back to local cache:', err);
+    }
+
+    // Fallback to local filter if network error
+    const filtered = allNews.filter((item) =>
+      (item.categories || []).includes(category)
+    );
+    setNewsList(filtered);
   };
 
   return (
