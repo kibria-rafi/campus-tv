@@ -15,6 +15,9 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({
   storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB maximum file size
+  },
   fileFilter: (_req, file, cb) => {
     const extension = file.originalname.split('.').pop()?.toLowerCase();
     const mimeAllowed = allowedFormats.some((format) =>

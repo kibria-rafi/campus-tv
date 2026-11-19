@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import {
   Calendar,
   Tag,
@@ -400,7 +401,7 @@ export default function NewsDetails({ lang }) {
                   className="article-body"
                   style={{ fontSize: `${fontSize}px` }}
                   dangerouslySetInnerHTML={{
-                    __html: pickLang(news.description, lang),
+                    __html: DOMPurify.sanitize(pickLang(news.description, lang) || ''),
                   }}
                 />
                 {news.secondaryImage && (
