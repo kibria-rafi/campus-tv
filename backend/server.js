@@ -3,6 +3,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const youtubeRoutes = require('./routes/youtube');
@@ -65,6 +66,8 @@ io.on('connection', (socket) => {
 });
 
 console.log('[CORS] Allowed origins:', allowedOrigins);
+
+app.use(compression());
 
 app.use(
   helmet({
@@ -151,6 +154,10 @@ const newsSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
 });
+
+newsSchema.index({ createdAt: -1 });
+newsSchema.index({ categories: 1, createdAt: -1 });
+newsSchema.index({ isLive: 1, createdAt: -1 });
 
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
 
