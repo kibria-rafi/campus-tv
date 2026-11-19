@@ -101,7 +101,10 @@ export default function LivePlayer({
         </h2>
 
         {mode === 'archive' && (
-          <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold border border-yellow-500/40">
+          <span
+            className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold border border-yellow-500/40"
+            title={fallbackReason || undefined}
+          >
             Archive Mode
           </span>
         )}

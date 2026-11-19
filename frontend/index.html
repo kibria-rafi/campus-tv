@@ -6,17 +6,37 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="shortcut icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="preload" href="/fonts/solaimanlipi-normal.woff2" as="font" type="font/woff2" crossorigin />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#E30613" />
-  <title>Campus TV</title>
-  <!-- Anti-flicker: apply saved theme before React mounts -->
+  <title>Campus TV — University Broadcasting Platform</title>
+  <meta name="description" content="Official live TV broadcasting and campus news publication platform of Daffodil International University. Watch live streams, breaking updates, and video archives." />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Campus TV" />
+  <meta property="og:url" content="https://campustv.ac/" />
+  <meta property="og:title" content="Campus TV — University Broadcasting Platform" />
+  <meta property="og:description" content="Watch Campus TV live — breaking campus news, live events, university updates, and video archives." />
+  <meta property="og:image" content="https://campustv.ac/logo.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://campustv.ac/" />
+  <meta name="twitter:title" content="Campus TV — University Broadcasting Platform" />
+  <meta name="twitter:description" content="Watch Campus TV live — breaking campus news, live events, university updates, and video archives." />
+  <meta name="twitter:image" content="https://campustv.ac/logo.png" />
+
+  <!-- Anti-flicker: apply saved theme before React mounts (defaults to light) -->
   <script>
     (function () {
       try {
         var stored = localStorage.getItem('theme');
-        var theme = stored ||
-          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        if (theme === 'dark') document.documentElement.classList.add('dark');
+        if (stored === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       } catch (e) { }
     })();
   </script>

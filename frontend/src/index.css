@@ -1,5 +1,28 @@
-@import url('https://fonts.maateen.me/solaiman-lipi/font.css');
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'SolaimanLipi';
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/solaimanlipi-bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'SolaimanLipi';
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/solaimanlipi-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'SolaimanLipi';
+  font-display: swap;
+  font-style: normal;
+  font-weight: 100;
+  src: url('/fonts/solaimanlipi-thin.woff2') format('woff2');
+}
 
 /*
   Tailwind v4 class-based dark mode.

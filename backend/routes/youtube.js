@@ -40,7 +40,7 @@ router.get('/latest', async (req, res) => {
     });
   }
 
-  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 20);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
 
   // Serve from cache if still valid.
   if (cache && Date.now() < cache.expiry) {
@@ -57,7 +57,7 @@ router.get('/latest', async (req, res) => {
     url.searchParams.set('channelId', channelId);
     url.searchParams.set('part', 'snippet');
     url.searchParams.set('order', 'date');
-    url.searchParams.set('maxResults', '20'); // always fetch max so cache is reusable
+    url.searchParams.set('maxResults', '50'); // always fetch max so cache is reusable
     url.searchParams.set('type', 'video');
 
     const response = await fetch(url.toString());

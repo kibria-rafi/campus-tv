@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const youtubeRoutes = require('./routes/youtube');
@@ -64,6 +66,14 @@ io.on('connection', (socket) => {
 });
 
 console.log('[CORS] Allowed origins:', allowedOrigins);
+
+app.use(compression());
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
 app.use(
   cors({
@@ -145,6 +155,10 @@ const newsSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+newsSchema.index({ createdAt: -1 });
+newsSchema.index({ categories: 1, createdAt: -1 });
+newsSchema.index({ isLive: 1, createdAt: -1 });
+
 const News = mongoose.models.News || mongoose.model('News', newsSchema);
 
 // ── Admin Credentials ─────────────────────────────────────────────────────
@@ -213,6 +227,22 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many login attempts. Please try again later.' },
+});
+
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many messages sent. Please try again later.' },
+});
+
+const searchLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many search requests. Please slow down.' },
 });
 
 app.post('/api/admin/login', loginLimiter, async (req, res) => {
@@ -352,7 +382,7 @@ app.get('/api/news', async (req, res) => {
 });
 
 // Must be declared before /api/news/:id to prevent Express treating "search" as an id.
-app.get('/api/news/search', async (req, res) => {
+app.get('/api/news/search', searchLimiter, async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
 
@@ -442,6 +472,11 @@ function normalizeNewsBody(req) {
 function uploadNewsImage(req, res, next) {
   upload.single('image')(req, res, (err) => {
     if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res
+          .status(400)
+          .json({ error: 'Image size exceeds the 5MB limit.' });
+      }
       return res.status(400).json({ error: err.message });
     }
     next();
@@ -620,7 +655,7 @@ app.get('/api/live/viewers', async (_req, res) => {
 
 app.use('/api/youtube', youtubeRoutes);
 
-app.post('/api/contact', async (req, res) => {
+app.post('/api/contact', contactLimiter, async (req, res) => {
   const { name, email, subject, message, company } = req.body;
 
   // Honeypot check — bots fill hidden fields; silently succeed

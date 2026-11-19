@@ -12,7 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -23,6 +23,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.1",
     "fast-xml-parser": "^5.7.3",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.1",
     "multer": "^2.1.1",
@@ -30,5 +31,10 @@
     "path-to-regexp": "^8.4.2",
     "socket.io": "^4.8.3",
     "socket.io-parser": "^4.2.6"
+  },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "$cloudinary"
+    }
   }
 }

@@ -55,7 +55,23 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const [lang, setLang] = useState('bn');
+  const [lang, setLang] = useState(() => {
+    try {
+      const stored = localStorage.getItem('campus_tv_lang');
+      return stored === 'en' || stored === 'bn' ? stored : 'bn';
+    } catch {
+      return 'bn';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('campus_tv_lang', lang);
+      document.documentElement.lang = lang;
+    } catch {
+      // Ignore storage errors
+    }
+  }, [lang]);
 
   return (
     <Router>
