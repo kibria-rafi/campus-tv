@@ -1,24 +1,29 @@
-const express = require('express');
+'use strict';
+
+require('dotenv').config();
 const http = require('http');
-const mongoose = require('mongoose');
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
+
+const { connectDB } = require('./config/db');
+const { initSocket } = require('./sockets/liveViewers');
+
+// Route Modules
+const newsRoutes = require('./routes/news');
+const adminRoutes = require('./routes/admin');
+const contactRoutes = require('./routes/contact');
+const streamRoutes = require('./routes/stream');
 const youtubeRoutes = require('./routes/youtube');
-const ContactMessage = require('./models/ContactMessage');
-const { Server } = require('socket.io');
-require('dotenv').config();
-const upload = require('./middleware/upload');
-const rateLimit = require('express-rate-limit');
 
 const app = express();
 const server = http.createServer(app);
 
-// Set FRONTEND_URL on Render to the deployed frontend origin.
+// ── Allowed Origins ────────────────────────────────────────────────────────
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // e.g. https://campus-tv.onrender.com
+  process.env.FRONTEND_URL,
   process.env.FRONTEND_URL_DEV,
   'https://campustv.ac',
   'https://www.campustv.ac',
@@ -28,45 +33,15 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 function isAllowedOrigin(origin) {
-  // Allow non-browser clients (curl, server-to-server).
+  // Allow non-browser clients (curl, health checks, server-to-server)
   if (!origin) return true;
   return allowedOrigins.includes(origin);
 }
 
-const io = new Server(server, {
-  cors: {
-    origin: (origin, cb) => {
-      if (isAllowedOrigin(origin)) return cb(null, true);
-      return cb(new Error(`Socket.IO CORS blocked for origin: ${origin}`));
-    },
-    methods: ['GET', 'POST'],
-  },
-});
+// ── WebSockets ─────────────────────────────────────────────────────────────
+initSocket(server, isAllowedOrigin);
 
-/** Broadcast current viewer count to everyone in the "live" room. */
-async function updateViewerCount() {
-  const sockets = await io.in('live').allSockets();
-  io.to('live').emit('live:viewers', { count: sockets.size });
-}
-
-io.on('connection', (socket) => {
-  socket.on('live:join', () => {
-    socket.join('live');
-    updateViewerCount();
-  });
-
-  socket.on('live:leave', () => {
-    socket.leave('live');
-    updateViewerCount();
-  });
-
-  socket.on('disconnect', () => {
-    updateViewerCount();
-  });
-});
-
-console.log('[CORS] Allowed origins:', allowedOrigins);
-
+// ── Middlewares ────────────────────────────────────────────────────────────
 app.use(compression());
 
 app.use(
@@ -85,33 +60,10 @@ app.use(
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 );
+
 app.use(express.json({ limit: '1mb' }));
 
-// ── News Categories ────────────────────────────────────────────────────────
-const ALLOWED_CATEGORIES = [
-  'Features',
-  'Culture',
-  'Education',
-  'Amar Campus',
-  'Opinion',
-  'Campus',
-  'Admission',
-  'Career',
-  'Event',
-];
-
-const CATEGORY_MAP = {
-  Features: { bn: 'ফিচার', en: 'Features' },
-  Culture: { bn: 'সংস্কৃতি', en: 'Culture' },
-  Education: { bn: 'শিক্ষা', en: 'Education' },
-  'Amar Campus': { bn: 'আমার ক্যাম্পাস', en: 'Amar Campus' },
-  Opinion: { bn: 'অপিনিয়ন', en: 'Opinion' },
-  Campus: { bn: 'ক্যাম্পাস', en: 'Campus' },
-  Admission: { bn: 'ভর্তি', en: 'Admission' },
-  Career: { bn: 'ক্যারিয়ার', en: 'Career' },
-  Event: { bn: 'ইভেন্ট', en: 'Event' },
-};
-
+// ── Health & Base Routes ───────────────────────────────────────────────────
 app.get('/', (_req, res) => {
   res.status(200).send('Campus TV backend is running.');
 });
@@ -120,786 +72,60 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ ok: true, service: 'campus-tv-backend' });
 });
 
-const newsSchema = new mongoose.Schema({
-  title: {
-    bn: { type: String, default: '' },
-    en: { type: String, default: '' },
-  },
-  subtitle: {
-    bn: { type: String, default: '' },
-    en: { type: String, default: '' },
-  },
-  description: {
-    bn: { type: String, default: '' },
-    en: { type: String, default: '' },
-  },
-  image: String,
-  secondaryImage: { type: String, default: '' },
-  imageCaption: { type: String, default: '' },
-  reporterName: { type: String, default: '' },
-  category: {
-    bn: { type: String, default: 'সাধারণ' },
-    en: { type: String, default: 'General' },
-  },
-  videoUrl: { type: String, default: '' },
-  isLive: { type: Boolean, default: false },
-  categories: {
-    type: [String],
-    default: [],
-    validate: {
-      validator: (arr) =>
-        Array.isArray(arr) && arr.every((v) => ALLOWED_CATEGORIES.includes(v)),
-      message: 'Invalid category value',
-    },
-  },
-  createdAt: { type: Date, default: Date.now },
-});
-
-newsSchema.index({ createdAt: -1 });
-newsSchema.index({ categories: 1, createdAt: -1 });
-newsSchema.index({ isLive: 1, createdAt: -1 });
-
-const News = mongoose.models.News || mongoose.model('News', newsSchema);
-
-// ── Admin Credentials ─────────────────────────────────────────────────────
-// Stores the single admin account with a bcrypt-hashed password.
-const adminCredentialsSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
-});
-
-const AdminCredentials =
-  mongoose.models.AdminCredentials ||
-  mongoose.model('AdminCredentials', adminCredentialsSchema);
-
-// ── Stream Settings ────────────────────────────────────────────────────────
-// Single-document collection that stores the live stream URLs.
-const streamSettingsSchema = new mongoose.Schema({
-  primaryM3u8: { type: String, required: true },
-  backupM3u8: { type: String, default: '' },
-  updatedAt: { type: Date, default: Date.now },
-  updatedBy: { type: String, default: '' },
-});
-
-const StreamSettings =
-  mongoose.models.StreamSettings ||
-  mongoose.model('StreamSettings', streamSettingsSchema);
-
-// ── Auth middleware ────────────────────────────────────────────────────────
-function requireAdmin(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  const token = auth.slice(7);
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (payload.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    req.admin = payload;
-    next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
-}
-
-function isValidStreamUrl(url) {
-  if (!url || typeof url !== 'string' || !url.trim()) return false;
-  try {
-    const u = new URL(url.trim());
-    return u.protocol === 'http:' || u.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function ensureValidObjectId(req, res, next) {
-  if (!mongoose.isValidObjectId(req.params.id)) {
-    return res.status(400).json({ error: 'Invalid ID format.' });
-  }
-  return next();
-}
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many login attempts. Please try again later.' },
-});
-
-const contactLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, error: 'Too many messages sent. Please try again later.' },
-});
-
-const searchLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 60,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many search requests. Please slow down.' },
-});
-
-app.post('/api/admin/login', loginLimiter, async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username and password are required.',
-      });
-    }
-
-    const admin = await AdminCredentials.findOne({ username });
-    if (!admin) {
-      return res
-        .status(401)
-        .json({ success: false, message: 'Invalid credentials' });
-    }
-
-    const match = await bcrypt.compare(password, admin.passwordHash);
-    if (!match) {
-      return res
-        .status(401)
-        .json({ success: false, message: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      { role: 'admin', username },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: '1d',
-      }
-    );
-    return res.json({ success: true, token });
-  } catch (err) {
-    console.error('[Login] Error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-app.get('/api/admin/verify', requireAdmin, (req, res) => {
-  res.json({ success: true, authenticated: true });
-});
-
-app.post('/api/admin/change-password', requireAdmin, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'All fields are required.' });
-    }
-    if (typeof newPassword !== 'string' || newPassword.length < 8) {
-      return res
-        .status(400)
-        .json({ error: 'New password must be at least 8 characters.' });
-    }
-
-    const username = req.admin.username;
-    // Single-admin setup: look up by username when available, otherwise
-    // fall back to the only document in the collection so that tokens
-    // issued before the username field was added to the JWT still work.
-    const admin = username
-      ? await AdminCredentials.findOne({ username })
-      : await AdminCredentials.findOne({});
-    if (!admin) {
-      return res.status(404).json({
-        error:
-          'Admin account not found. Please restart the server so the admin account can be seeded.',
-      });
-    }
-
-    const match = await bcrypt.compare(currentPassword, admin.passwordHash);
-    if (!match) {
-      return res.status(401).json({ error: 'Current password is incorrect.' });
-    }
-
-    const sameAsOld = await bcrypt.compare(newPassword, admin.passwordHash);
-    if (sameAsOld) {
-      return res
-        .status(400)
-        .json({ error: 'New password must differ from the current password.' });
-    }
-
-    admin.passwordHash = await bcrypt.hash(newPassword, 12);
-    await admin.save();
-
-    return res.json({
-      success: true,
-      message: 'Password updated successfully.',
-    });
-  } catch (err) {
-    console.error('[ChangePassword] Error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-app.get('/api/news', async (req, res) => {
-  try {
-    const parsedLimit = req.query.limit ? parseInt(req.query.limit, 10) : null;
-    const limit =
-      Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const category = req.query.category; // Filter by category
-    const summaryOnly =
-      req.query.summary === '1' || req.query.summary === 'true';
-
-    // Base filter: only plain articles (no videoUrl and not isLive)
-    const filter = {
-      $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
-      isLive: { $ne: true },
-    };
-
-    // Add category filter if provided
-    if (category && ALLOWED_CATEGORIES.includes(category)) {
-      filter.categories = category;
-    }
-
-    let query = News.find(filter).sort({ createdAt: -1 }).lean();
-
-    if (summaryOnly) {
-      query = query.select(
-        'title subtitle image videoUrl isLive category categories createdAt'
-      );
-    }
-
-    if (limit && limit > 0) {
-      const skip = (page - 1) * limit;
-      query = query.skip(skip).limit(limit);
-    }
-
-    const news = await query;
-    res.json(news);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Must be declared before /api/news/:id to prevent Express treating "search" as an id.
-app.get('/api/news/search', searchLimiter, async (req, res) => {
-  try {
-    const q = (req.query.q || '').trim();
-
-    // Return early for missing / too-short queries
-    if (q.length < 2) {
-      return res.json({ results: [] });
-    }
-
-    // Escape special regex characters to prevent ReDoS
-    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const rx = new RegExp(escaped, 'i');
-
-    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
-
-    const docs = await News.find({
-      $or: [
-        { 'title.bn': rx },
-        { 'title.en': rx },
-        { 'subtitle.bn': rx },
-        { 'subtitle.en': rx },
-        { 'description.bn': rx },
-        { 'description.en': rx },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .limit(limit);
-
-    const results = docs.map((n) => ({
-      id: n._id,
-      title: n.title,
-      snippet: {
-        bn: (n.description?.bn || n.subtitle?.bn || '').slice(0, 160),
-        en: (n.description?.en || n.subtitle?.en || '').slice(0, 160),
-      },
-      image: n.image || '',
-      category: n.category,
-      createdAt: n.createdAt,
-    }));
-
-    return res.json({ results });
-  } catch (err) {
-    console.error('[Search] News search failed:', err);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-/** Sanitise & validate the categories field from a request body. */
-function parseCategories(raw) {
-  if (typeof raw === 'string') {
-    try {
-      return parseCategories(JSON.parse(raw));
-    } catch {
-      return ALLOWED_CATEGORIES.includes(raw) ? [raw] : [];
-    }
-  }
-  if (!Array.isArray(raw)) return [];
-  const valid = raw.filter((v) => ALLOWED_CATEGORIES.includes(v));
-  return [...new Set(valid)];
-}
-
-function parseJsonField(raw, fallback) {
-  if (typeof raw !== 'string') return raw || fallback;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
-
-function normalizeNewsBody(req) {
-  const body = { ...req.body };
-  body.title = parseJsonField(body.title, {});
-  body.subtitle = parseJsonField(body.subtitle, {});
-  body.description = parseJsonField(body.description, {});
-  body.category = parseJsonField(body.category, {});
-  body.categories = parseCategories(body.categories);
-  body.videoUrl = '';
-  body.isLive = false;
-
-  if (req.file?.path) {
-    body.image = req.file.path;
-  }
-
-  return body;
-}
-
-function uploadNewsImage(req, res, next) {
-  upload.single('image')(req, res, (err) => {
-    if (err) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res
-          .status(400)
-          .json({ error: 'Image size exceeds the 5MB limit.' });
-      }
-      return res.status(400).json({ error: err.message });
-    }
-    next();
-  });
-}
-
-/** Strip HTML tags to check whether rich-text content is effectively empty. */
-function isContentEmpty(str) {
-  if (!str || typeof str !== 'string') return true;
-  return str.replace(/<[^>]*>/g, '').trim() === '';
-}
-
-/**
- * Validate bilingual news payload.
- * At least one language must be complete (title + description).
- * Returns an error string, or null if valid.
- */
-function validateNewsPayload(body) {
-  const titleBn = (body.title?.bn || '').trim();
-  const titleEn = (body.title?.en || '').trim();
-  const hasBnTitle = titleBn !== '';
-  const hasEnTitle = titleEn !== '';
-
-  if (!hasBnTitle && !hasEnTitle) {
-    return 'At least one language title is required.';
-  }
-
-  const hasBnDesc = !isContentEmpty(body.description?.bn);
-  const hasEnDesc = !isContentEmpty(body.description?.en);
-
-  if (hasBnTitle && !hasBnDesc) {
-    return 'Bengali title provided but Bengali description is missing.';
-  }
-  if (!hasBnTitle && hasBnDesc) {
-    return 'Bengali description provided but Bengali title is missing.';
-  }
-  if (hasEnTitle && !hasEnDesc) {
-    return 'English title provided but English description is missing.';
-  }
-  if (!hasEnTitle && hasEnDesc) {
-    return 'English description provided but English title is missing.';
-  }
-
-  return null;
-}
-
-app.post('/api/news', requireAdmin, uploadNewsImage, async (req, res) => {
-  try {
-    const body = normalizeNewsBody(req);
-
-    const validationError = validateNewsPayload(body);
-    if (validationError) {
-      return res.status(400).json({ error: validationError });
-    }
-
-    const newNews = new News(body);
-    await newNews.save();
-    res.json({ success: true, message: 'News published!' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Sidebar endpoint — must be declared BEFORE /api/news/:id patterns
-app.get('/api/news/sidebar/:id', ensureValidObjectId, async (req, res) => {
-  try {
-    const relatedLimit = Math.min(parseInt(req.query.related) || 10, 20);
-    const latestLimit = Math.min(parseInt(req.query.latest) || 10, 20);
-
-    const current = await News.findById(req.params.id).lean();
-    if (!current) return res.status(404).json({ error: 'News not found' });
-
-    const currentCategories = current.categories || [];
-
-    // Base filter: plain articles only, exclude current
-    const baseFilter = {
-      _id: { $ne: current._id },
-      $or: [{ videoUrl: '' }, { videoUrl: { $exists: false } }],
-      isLive: { $ne: true },
-    };
-
-    let related = [];
-
-    if (currentCategories.length > 0) {
-      related = await News.find({
-        ...baseFilter,
-        categories: { $in: currentCategories },
-      })
-        .sort({ createdAt: -1 })
-        .limit(relatedLimit)
-        .lean();
-    }
-
-    // Collect related ids to exclude from latest
-    const relatedIds = related.map((item) => String(item._id));
-
-    // Fetch latest, excluding current + related; over-fetch so we can trim
-    const latestRaw = await News.find({
-      ...baseFilter,
-      _id: { $nin: [String(current._id), ...relatedIds] },
-    })
-      .sort({ createdAt: -1 })
-      .limit(latestLimit)
-      .lean();
-
-    return res.json({ related, latest: latestRaw });
-  } catch (err) {
-    console.error('[Sidebar] Error:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-app.get('/api/news/:id', ensureValidObjectId, async (req, res) => {
-  try {
-    const doc = await News.findById(req.params.id).lean();
-    if (!doc) {
-      return res.status(404).json({ error: 'News not found' });
-    }
-    return res.json(doc);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-app.put(
-  '/api/news/:id',
-  requireAdmin,
-  ensureValidObjectId,
-  uploadNewsImage,
-  async (req, res) => {
-    try {
-      const body = normalizeNewsBody(req);
-
-      const validationError = validateNewsPayload(body);
-      if (validationError) {
-        return res.status(400).json({ error: validationError });
-      }
-
-      const updatedNews = await News.findByIdAndUpdate(req.params.id, body, {
-        new: true,
-        runValidators: true,
-      });
-      if (!updatedNews)
-        return res.status(404).json({ message: 'News not found' });
-      res.json({ success: true, updatedNews });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
-);
-
-app.delete(
-  '/api/news/:id',
-  requireAdmin,
-  ensureValidObjectId,
-  async (req, res) => {
-    try {
-      const deletedNews = await News.findByIdAndDelete(req.params.id);
-      if (!deletedNews)
-        return res.status(404).json({ message: 'News not found' });
-      res.json({ success: true, message: 'News deleted successfully' });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
-);
-
-app.get('/api/live/viewers', async (_req, res) => {
-  const sockets = await io.in('live').allSockets();
-  res.json({ count: sockets.size });
-});
-
+// ── API Routes ─────────────────────────────────────────────────────────────
+app.use('/api/news', newsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api/youtube', youtubeRoutes);
+app.use('/api', streamRoutes);
 
-app.post('/api/contact', contactLimiter, async (req, res) => {
-  const { name, email, subject, message, company } = req.body;
-
-  // Honeypot check — bots fill hidden fields; silently succeed
-  if (company && company.trim() !== '') {
-    return res.json({ success: true });
-  }
-
-  if (!name || !name.trim()) {
-    return res.status(400).json({ error: 'Name is required.' });
-  }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res
-      .status(400)
-      .json({ error: 'A valid email address is required.' });
-  }
-  if (!message || message.trim().length < 5) {
-    return res.status(400).json({ error: 'Message is too short.' });
-  }
-  if (message.length > 2000) {
-    return res
-      .status(400)
-      .json({ error: 'Message must be under 2000 characters.' });
-  }
-
-  try {
-    await ContactMessage.create({
-      name: name.trim(),
-      email: email.trim(),
-      subject: subject?.trim() || 'General',
-      message: message.trim(),
-    });
-  } catch (err) {
-    console.error('[Contact] Save error:', err);
-    return res
-      .status(500)
-      .json({ error: 'Failed to save message. Please try again.' });
-  }
-
-  return res.json({ success: true, message: 'Message received.' });
-});
-
-// ── Contact Messages Admin routes ─────────────────────────────────────────
-
-// GET all messages, newest first
-app.get('/api/admin/messages', requireAdmin, async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const [messages, total] = await Promise.all([
-      ContactMessage.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-      ContactMessage.countDocuments()
-    ]);
-
-    return res.json({
-      messages,
-      page,
-      totalPages: Math.ceil(total / limit) || 1
-    });
-  } catch (err) {
-    console.error('[Messages] GET error:', err);
-    return res.status(500).json({ error: 'Failed to fetch messages.' });
-  }
-});
-
-// GET unread count — must be declared before /:id to avoid param collision
-app.get('/api/admin/messages/unread-count', requireAdmin, async (_req, res) => {
-  try {
-    const count = await ContactMessage.countDocuments({ isRead: false });
-    return res.json({ count });
-  } catch (err) {
-    console.error('[Messages] Unread count error:', err);
-    return res.status(500).json({ error: 'Failed to fetch unread count.' });
-  }
-});
-
-// PATCH mark a message as read
-app.patch(
-  '/api/admin/messages/:id/read',
-  requireAdmin,
-  ensureValidObjectId,
-  async (req, res) => {
-    try {
-      const updated = await ContactMessage.findByIdAndUpdate(
-        req.params.id,
-        { isRead: true },
-        { new: true }
-      );
-      if (!updated)
-        return res.status(404).json({ error: 'Message not found.' });
-      return res.json({ success: true });
-    } catch (err) {
-      console.error('[Messages] Mark read error:', err);
-      return res.status(500).json({ error: 'Failed to mark message as read.' });
-    }
-  }
-);
-
-// DELETE a message
-app.delete(
-  '/api/admin/messages/:id',
-  requireAdmin,
-  ensureValidObjectId,
-  async (req, res) => {
-    try {
-      const deleted = await ContactMessage.findByIdAndDelete(req.params.id);
-      if (!deleted)
-        return res.status(404).json({ error: 'Message not found.' });
-      return res.json({ success: true, message: 'Message deleted.' });
-    } catch (err) {
-      console.error('[Messages] DELETE error:', err);
-      return res.status(500).json({ error: 'Failed to delete message.' });
-    }
-  }
-);
-
-// ── Stream Settings routes ─────────────────────────────────────────────────
-
-// Public: frontend live player reads this to get current stream URLs.
-app.get('/api/stream-settings', async (_req, res) => {
-  try {
-    const settings = await StreamSettings.findOne();
-    if (!settings) {
-      return res.json({ primaryM3u8: '', backupM3u8: null });
-    }
-    return res.json({
-      primaryM3u8: settings.primaryM3u8,
-      backupM3u8: settings.backupM3u8 || null,
-    });
-  } catch (err) {
-    console.error('[StreamSettings] GET public error:', err);
-    return res.status(500).json({ error: 'Failed to fetch stream settings' });
-  }
-});
-
-// Admin: read current settings
-app.get('/api/admin/stream-settings', requireAdmin, async (_req, res) => {
-  try {
-    const settings = await StreamSettings.findOne();
-    if (!settings) {
-      return res.json({ primaryM3u8: '', backupM3u8: null });
-    }
-    return res.json({
-      primaryM3u8: settings.primaryM3u8,
-      backupM3u8: settings.backupM3u8 || null,
-    });
-  } catch (err) {
-    console.error('[StreamSettings] Admin GET error:', err);
-    return res.status(500).json({ error: 'Failed to fetch stream settings' });
-  }
-});
-
-// Admin: create or update settings (upsert single document)
-app.put('/api/admin/stream-settings', requireAdmin, async (req, res) => {
-  try {
-    const { primaryM3u8, backupM3u8 } = req.body;
-
-    if (!isValidStreamUrl(primaryM3u8)) {
-      return res.status(400).json({
-        error:
-          'primaryM3u8 must be a valid http/https URL (e.g. https://example.com/stream.m3u8)',
-      });
-    }
-
-    const backup =
-      backupM3u8 && backupM3u8.trim()
-        ? isValidStreamUrl(backupM3u8)
-          ? backupM3u8.trim()
-          : (() => {
-              throw new Error(
-                'backupM3u8 must be a valid http/https URL if provided'
-              );
-            })()
-        : '';
-
-    const updatedBy = req.admin?.username || req.admin?.sub || '';
-    const settings = await StreamSettings.findOneAndUpdate(
-      {},
-      {
-        primaryM3u8: primaryM3u8.trim(),
-        backupM3u8: backup,
-        updatedAt: new Date(),
-        updatedBy,
-      },
-      { upsert: true, new: true }
-    );
-
-    return res.json({
-      primaryM3u8: settings.primaryM3u8,
-      backupM3u8: settings.backupM3u8 || null,
-    });
-  } catch (err) {
-    console.error('[StreamSettings] Admin PUT error:', err);
-    if (err.message.includes('valid')) {
-      return res.status(400).json({ error: err.message });
-    }
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// ── Global Error Handler ─────────────────────────────────────────────────
-app.use((err, req, res, next) => {
+// ── Global Error Handler ───────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
   console.error('[Global Error]', err);
   res.status(500).json({ success: false, message: 'Internal Server Error' });
 });
 
+// ── Server Lifecycle & Graceful Shutdown ───────────────────────────────────
+let isShuttingDown = false;
+
+function gracefulShutdown(signal) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`\n[Server] Received ${signal}. Starting graceful shutdown...`);
+
+  server.close(async () => {
+    console.log('[Server] HTTP server closed.');
+    try {
+      await mongoose.connection.close(false);
+      console.log('[DB] MongoDB connection closed.');
+      process.exit(0);
+    } catch (err) {
+      console.error('[Server] Error during database disconnect:', err);
+      process.exit(1);
+    }
+  });
+
+  // Force shutdown if cleanup hangs
+  setTimeout(() => {
+    console.error('[Server] Forced shutdown timeout reached.');
+    process.exit(1);
+  }, 10000).unref();
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Server] Unhandled Promise Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Server] Uncaught Exception:', err);
+  gracefulShutdown('uncaughtException');
+});
+
 const startServer = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ MongoDB Connected Successfully!');
-
-    // One-time migration: ensure all old docs have categories: []
-    const migrated = await News.updateMany(
-      { categories: { $exists: false } },
-      { $set: { categories: [] } }
-    );
-    if (migrated.modifiedCount > 0) {
-      console.log(
-        `[Migration] Backfilled categories:[] on ${migrated.modifiedCount} news document(s).`
-      );
-    }
-
-    // Seed admin account from env vars if no admin doc exists yet.
-    // This runs once on first deploy; after that, use change-password to update.
-    const existingAdmin = await AdminCredentials.findOne({
-      username: process.env.ADMIN_USER,
-    });
-    if (!existingAdmin) {
-      if (!process.env.ADMIN_USER || !process.env.ADMIN_PASS) {
-        console.warn(
-          '[Auth] ADMIN_USER or ADMIN_PASS env vars are missing — cannot seed admin account.'
-        );
-      } else {
-        const hash = await bcrypt.hash(process.env.ADMIN_PASS, 12);
-        await AdminCredentials.create({
-          username: process.env.ADMIN_USER,
-          passwordHash: hash,
-        });
-        console.log(
-          `[Auth] Admin account seeded for user "${process.env.ADMIN_USER}".`
-        );
-      }
-    }
+    await connectDB();
 
     const PORT = Number(process.env.PORT) || 5001;
 
@@ -918,7 +144,7 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error('❌ MongoDB Connection Error:', err);
+    console.error('❌ Failed to start server:', err);
     process.exit(1);
   }
 };
