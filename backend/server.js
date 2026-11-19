@@ -1,6 +1,9 @@
 'use strict';
 
 require('dotenv').config();
+const { validateEnv } = require('./config/env');
+validateEnv();
+
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
