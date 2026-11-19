@@ -11,12 +11,8 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.8.13",
-    "brace-expansion": "^1.1.14",
     "dompurify": "^3.4.18",
-    "flatted": "^3.4.2",
-    "lodash": "^4.18.1",
     "lucide-react": "^0.564.0",
-    "picomatch": "^4.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",

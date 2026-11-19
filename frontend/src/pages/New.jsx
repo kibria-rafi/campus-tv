@@ -111,7 +111,6 @@ export default function New({ lang }) {
 
   useEffect(() => {
     fetchNews(1, selectedCategory, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const handleCategoryClick = (category) => {
