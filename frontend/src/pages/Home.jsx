@@ -32,6 +32,24 @@ const CATEGORY_LABELS = {
   Event: { bn: 'ইভেন্ট', en: 'Event' },
 };
 
+function NewsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:auto-rows-[260px]">
+      <div className="md:col-span-2 lg:col-span-2 h-60 md:h-72 lg:h-full bg-muted animate-pulse rounded-sm"></div>
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="flex flex-col h-40 md:h-auto bg-card border border-border rounded-sm animate-pulse">
+          <div className="h-40 bg-muted shrink-0"></div>
+          <div className="p-3 flex-1">
+            <div className="h-3 w-1/3 bg-muted rounded mb-2"></div>
+            <div className="h-4 w-full bg-muted rounded mb-1"></div>
+            <div className="h-4 w-2/3 bg-muted rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Home({ lang }) {
   const [newsList, setNewsList] = useState([]);
   const [allNews, setAllNews] = useState([]); // Store all news for filtering
@@ -96,22 +114,6 @@ export default function Home({ lang }) {
       setVisibleCount(11);
     }
   };
-
-  const NewsSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:auto-rows-[260px]">
-      <div className="md:col-span-2 lg:col-span-2 h-60 md:h-72 lg:h-full bg-muted animate-pulse rounded-sm"></div>
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="flex flex-col h-40 md:h-auto bg-card border border-border rounded-sm animate-pulse">
-          <div className="h-40 bg-muted shrink-0"></div>
-          <div className="p-3 flex-1">
-            <div className="h-3 w-1/3 bg-muted rounded mb-2"></div>
-            <div className="h-4 w-full bg-muted rounded mb-1"></div>
-            <div className="h-4 w-2/3 bg-muted rounded"></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 
   return (
     <div className="space-y-6">
@@ -207,11 +209,9 @@ export default function Home({ lang }) {
                 <h2 className="text-lg md:text-xl lg:text-2xl font-bold leading-tight underline decoration-brandRed decoration-4 underline-offset-8 mb-1">
                   {pickLang(newsList[0].title, lang)}
                 </h2>
-                {newsList[0].body && (
-                  <p className="text-sm text-gray-300 line-clamp-2 hidden md:block">
-                    {typeof newsList[0].body === 'object'
-                      ? newsList[0].body[lang]
-                      : newsList[0].body}
+                {pickLang(newsList[0].subtitle, lang) && (
+                  <p className="text-sm text-gray-300 line-clamp-2 hidden md:block mt-1">
+                    {pickLang(newsList[0].subtitle, lang)}
                   </p>
                 )}
               </div>
